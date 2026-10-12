@@ -1,0 +1,54 @@
+# =============================================================================
+# submission/requirements.txt
+# Studio 2 — Klasifikasi Sampah · IF25-40401 · Kelompok <15/DUO FF>
+# =============================================================================
+# BLOK KONFIGURASI / PENJELASAN — BACA DULU SEBELUM MENGUBAH
+# =============================================================================
+#
+# KEPUTUSAN KELOMPOK: pendekatan = CNN murni dari torchvision.
+# Jadi timm SENGAJA TIDAK dipakai/ditulis di sini. Semua backbone yang kita
+# butuhkan (ResNet, EfficientNet, ConvNeXt, DenseNet, VGG) sudah tersedia
+# lengkap di torchvision.
+#
+# Cara pakai:
+#     pip install -r submission/requirements.txt
+#
+# Catatan penting soal environment asisten dosen:
+# Paket di bawah ini SELALU sudah tersedia di environment asisten:
+#     torch, torchvision, timm, pillow, numpy
+# Karena itu kita TULIS TANPA KUNCI VERSI (tanpa tanda ==).
+# Efeknya:
+#   - Di environment asisten  -> "Requirement already satisfied", tidak ada
+#     yang di-reinstall, environment asisten tetap aman.
+#   - Di laptop / Kaggle / Colab kita -> paket yang belum ada otomatis dipasang.
+#
+# JANGAN kunci versi torch (contoh SALAH: torch==2.5.1).
+# Alasannya: environment asisten sudah punya torch dengan build CUDA tertentu.
+# Kalau dikunci, pip bisa memaksa turun/naik versi dan merusak environment itu,
+# sehingga submission kita gagal dievaluasi.
+#
+# Kalau butuh paket BARU di luar daftar ini, tulis nama paketnya saja
+# (satu paket per baris) di bagian "PAKET TAMBAHAN" paling bawah.
+# JANGAN taruh perintah pip/shell di sini:
+#     SALAH -> pip install einops
+#     BENAR -> einops
+#
+# =============================================================================
+# PAKET INTI — dipakai oleh submission/model.py
+# =============================================================================
+numpy          # operasi array / komputasi numerik
+pillow         # membuka & mengubah ukuran gambar (PIL.Image) — dipakai evaluate.py
+torch          # framework deep learning, membangun & menjalankan model
+torchvision    # WAJIB: sumber backbone CNN pra-latih + transforms get_transform()
+
+# =============================================================================
+# PAKET TAMBAHAN — isi kalau model butuh paket di luar daftar di atas
+# =============================================================================
+# Contoh (hapus tanda '#' kalau memang dipakai):
+# einops
+# scikit-learn
+#
+# CATATAN: timm TIDAK dicantumkan karena kelompok memakai CNN murni torchvision.
+# Kalau di tengah jalan kita pindah ke backbone modern (MobileViT/Swin/ViT),
+# buka komentar baris di bawah ini:
+# timm
