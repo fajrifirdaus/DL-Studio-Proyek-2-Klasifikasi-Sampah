@@ -1,4 +1,4 @@
-# Studio 2 — Klasifikasi Sampah · Kelompok <NOMOR/NAMA KELOMPOK>
+# Studio 2 — Klasifikasi Sampah · Kelompok <15/DUO FF>
 
 Deep Learning (IF25-40401) · Teknik Informatika ITERA · Semester Ganjil 2026/2027
 
@@ -6,9 +6,8 @@ Deep Learning (IF25-40401) · Teknik Informatika ITERA · Semester Ganjil 2026/2
 
 | No | Nama Lengkap | NIM | Kontribusi utama |
 |----|--------------|-----|------------------|
-| 1  |              |     |                  |
-| 2  |              |     |                  |
-| 3  |              |     |                  |
+| 1  | Muhammad Fadhilah Akbar | 123140003 |  |
+| 2  | Muhammad Fajri Firdaus | 123140050 |  |
 
 ## Ringkasan Pendekatan
 
