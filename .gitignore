@@ -1,0 +1,77 @@
+# =============================================================================
+# .gitignore — repo Studio 2 (Klasifikasi Sampah, IF25-40401)
+# Kelompok <15/DUO FF> · Muhammad Fadhilah Akbar · Muhammad Fajri Firdaus
+# =============================================================================
+# BLOK KONFIGURASI — BACA DULU
+# =============================================================================
+#
+# TUJUAN FILE INI: memastikan yang TIDAK boleh masuk GitHub tidak ikut ter-commit.
+# Ada 3 kelompok besar yang dijaga di sini:
+#
+#   1) DATASET  -> DILARANG diunggah ulang ke repo publik (aturan studio 2).
+#      Gambar asli, split lokal, dan salinannya semuanya diabaikan.
+#      Yang boleh masuk repo hanya KODE + BOBOT model.
+#
+#   2) BOBOT BESAR -> GitHub menolak file > 100 MB.
+#      model.pth > 100 MB harus jadi aset GitHub Release / Git LFS,
+#      lalu tautannya ditulis di README. Karena itu baris model.pth
+#      sengaja DIBERI KOMENTAR (tidak diabaikan) agar tetap bisa di-commit
+#      kalau ukurannya masih di bawah 100 MB.
+#
+#   3) SAMPAH TEKNIS -> cache python, output notebook, file OS.
+#
+# Cara pakai:
+#   git status                 # cek apa yang akan ikut
+#   git check-ignore -v <file> # cek apakah sebuah file diabaikan + alasannya
+#
+# =============================================================================
+# 1) DATASET & SPLIT LOKAL — JANGAN PERNAH DI-COMMIT
+# =============================================================================
+# Root dataset (kalau nanti ditaruh di dalam repo, mis. hasil unduhan GDrive)
+data/
+dataset/
+train/
+val/
+my_train/
+my_val/
+*.jpg
+*.jpeg
+*.png
+*.webp
+*.bmp
+
+# Sumber gambar dari GDrive (berisi daftar URL gambar)
+train_sources.csv
+
+# =============================================================================
+# 2) BOBOT MODEL
+# =============================================================================
+# Model hasil latihan boleh di-commit SELAMA < 100 MB (batas GitHub).
+# Kalau model akhir > 100 MB (mis. backbone besar), unggah sebagai
+# GitHub Release / Git LFS lalu tulis tautannya di README.
+# Baris di bawah sengaja dikomentari; buka komentar HANYA kalau bobot
+# mau dititipkan di Release/LFS, bukan di repo.
+# submission/model.pth
+# *.pth
+# *.pt
+# *.ckpt
+# *.safetensors
+
+# =============================================================================
+# 3) SAMPAH TEKNIS
+# =============================================================================
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+*/.ipynb_checkpoints/*
+.venv/
+venv/
+env/
+.pytest_cache/
+*.log
+runs/
+wandb/
+lightning_logs/
+.DS_Store
+Thumbs.db
+desktop.ini
