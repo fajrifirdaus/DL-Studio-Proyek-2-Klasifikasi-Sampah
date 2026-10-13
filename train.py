@@ -480,7 +480,8 @@ def train_one_epoch(model, loader, loss_fn, opt, device) -> tuple:
     total_loss, benar, total = 0.0, 0, 0
     for x, y in loader:
         x, y = x.to(device), y.to(device)
-        opt.zero_grad()
+        # set_to_none=True lebih hemat memori daripada mengisi gradien dengan nol
+        opt.zero_grad(set_to_none=True)
         logits = model(x)
         loss = loss_fn(logits, y)
         loss.backward()
@@ -493,7 +494,12 @@ def train_one_epoch(model, loader, loss_fn, opt, device) -> tuple:
 
 @torch.no_grad()
 def evaluate(model, loader, loss_fn, device) -> dict:
-    """Evaluasi model: loss, akurasi, macro-F1, F1 per kelas, confusion matrix."""
+    """Evaluasi model: loss, akurasi, macro-F1, F1 per kelas, confusion matrix.
+
+    WAJIB memakai @torch.no_grad(). Tanpa itu, PyTorch menyimpan seluruh grafik
+    perhitungan untuk SETIAP batch validasi (13 batch pada split 85/15), dan
+    memori GPU menumpuk sampai kehabisan (CUDA out of memory).
+    """
     model.eval()
     total_loss, y_true, y_pred = 0.0, [], []
     for x, y in loader:
@@ -683,12 +689,27 @@ def main() -> None:
           f"(cocok dengan resolusi latih {img_latih}x{img_latih}) OK")
 
     va_ds = PathListDataset(val_items, val_tf) if val_items else None
+
+    # ---------- PENGAMAN MEMORI: batch otomatis diturunkan bila resolusi besar ----
+    # Kebutuhan memori naik ~kuadrat resolusi. Pada 384 (EfficientNet V2-S) batch
+    # 32 TIDAK muat di T4 16 GB -> CUDA out of memory di tengah epoch.
+    _batas_batch = {224: 32, 256: 24, 288: 16, 320: 12, 384: 8, 448: 6, 512: 4}
+    batch_aman = next((max(1, b) for r, b in sorted(_batas_batch.items())
+                       if img_latih <= r), 4)
+    if a.batch_size > batch_aman:
+        print(f"[memori] resolusi {img_latih}x{img_latih} -> batch diturunkan otomatis: "
+              f"{a.batch_size} -> {batch_aman}")
+        a.batch_size = batch_aman
+    else:
+        print(f"[memori] batch {a.batch_size} aman untuk resolusi {img_latih}x{img_latih}")
+
     # drop_last=True: buang batch terakhir yang tidak penuh. Batch kecil
     # (mis. 4 gambar) membuat statistik BatchNorm goyah saat latih.
     tr_dl = DataLoader(tr_ds, a.batch_size, shuffle=True, num_workers=workers,
                        pin_memory=(device.type == "cuda"), drop_last=True)
     va_dl = (DataLoader(va_ds, a.batch_size, shuffle=False, num_workers=workers,
                         pin_memory=(device.type == "cuda")) if va_ds else None)
+    # va_dl dibuat dengan batch yang mungkin sudah diturunkan di atas
 
     # ---------- 3. MODEL ----------
     model = get_model()
@@ -702,6 +723,13 @@ def main() -> None:
         if info_salin["disalin"] < 0.5 * info_salin["total_kunci_model_kita"]:
             print("[PERINGATAN] sangat sedikit tensor yang tersalin - periksa nama backbone!")
     model.to(device)
+
+    # Bersihkan sisa memori GPU dari proses/percobaan sebelumnya. Tanpa ini,
+    # sisa memori ikut menekan jatah selama latih.
+    if device.type == "cuda":
+        torch.cuda.empty_cache()
+        bebas, total = torch.cuda.mem_get_info()
+        print(f"[memori] GPU bebas {bebas / 1e9:.1f} GB dari {total / 1e9:.1f} GB")
 
     if a.freeze_epochs:
         set_backbone_trainable(model, False)

@@ -48,9 +48,10 @@ Di laptop sama saja:
 python train.py --data "<...>/train" --arsitektur experiments/resnet34_model.py \
                 --backbone resnet34 --tag coba_resnet34
 
-# EfficientNet V2-S (384, 82,7 MB) - latih ~3,5x lebih lama, pakai batch-size 16
+# EfficientNet V2-S (384, 82,7 MB) - latih ~3,5x lebih lama
+# batch-nya diturunkan OTOMATIS jadi 8 (resolusi 384 tidak muat di batch 32)
 python train.py --data "<...>/train" --arsitektur experiments/efficientnet_v2s_model.py \
-                --backbone efficientnet_v2_s --batch-size 16 --tag coba_v2s
+                --backbone efficientnet_v2_s --tag coba_v2s   # batch otomatis jadi 8
 ```
 
 > **Kenapa manual, bukan otomatis?** Supaya tidak ada yang bisa menimpa submission secara
@@ -59,7 +60,9 @@ python train.py --data "<...>/train" --arsitektur experiments/efficientnet_v2s_m
 
 > **Jujur:** ganti backbone belum tentu menaikkan skor. Baseline resmi 0,92 dan ruang
 > perbaikan terbesar ada di **cara melatih** — itu yang sudah dikerjakan `train.py`.
-> Backbone lebih besar = latih 1,5–2× lebih lama, `model.pth` ±85 MB, risiko OOM naik.
+> Backbone lebih besar = latih 1,5–2× lebih lama, `model.pth` ±85 MB.
+> **Memori:** batch diturunkan otomatis mengikuti resolusi
+> (224→32, 256→24, 288→16, 320→12, 384→8, 448→6, 512→4), jadi 384 aman di T4 16 GB.
 
 ## Kenapa ResNet-18, bukan backbone yang lebih besar?
 
@@ -105,6 +108,7 @@ kelompok dengan 10 perbaikan berikut.
 | 8 | Salin bobot hardcode awalan `fc.` (khusus ResNet) | Salin berbasis kecocokan bentuk tensor + dilaporkan jumlahnya |
 | 9 | Tidak pernah diuji lewat `evaluate.py` sebelum tenggat | Pelatihan memakai `get_model()`/`get_transform()` dari `submission/model.py`, jadi mismatch kontrak terdeteksi lebih awal |
 | 10 | Tidak mendukung strategi fine-tuning yang diminta RPS | Dukungan *linear probing* → *full fine-tuning*, 5-fold CV, dan pelatihan ulang 100% data |
+| 11 | `evaluate()` tanpa `@torch.no_grad()` → grafik perhitungan menumpuk di VRAM (CUDA out of memory) | `@torch.no_grad()` + `zero_grad(set_to_none=True)` + batch otomatis + `empty_cache()` |
 
 **Catatan kejujuran:** nilai harapan perbaikan (mis. "+1–3%") tidak dicantumkan di sini karena
 belum diukur. Yang terukur baru baseline resmi 0,92 pada validation set tersembunyi.
