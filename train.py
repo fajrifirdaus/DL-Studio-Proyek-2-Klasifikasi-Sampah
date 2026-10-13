@@ -399,8 +399,23 @@ def muat_arsitektur(jalur):
     manual ke submission/model.py (lihat experiments/README.md).
     """
     jalur = Path(jalur)
+    # Jalur relatif dihitung dari folder kerja. Kalau tidak ketemu di sana,
+    # dicari juga di folder tempat train.py berada - supaya tidak gagal hanya
+    # karena menjalankannya dari folder lain.
+    if not jalur.is_file() and not jalur.is_absolute():
+        alternatif = Path(__file__).resolve().parent / jalur
+        if alternatif.is_file():
+            print(f"[arsitektur] '{jalur}' tidak ada di folder kerja, dipakai: {alternatif}")
+            jalur = alternatif
     if not jalur.is_file():
-        raise SystemExit(f"[GAGAL] berkas arsitektur tidak ditemukan: {jalur}")
+        _dir_exp = Path(__file__).resolve().parent / "experiments"
+        _ada = sorted(p.name for p in _dir_exp.glob("*_model.py")) if _dir_exp.is_dir() else []
+        raise SystemExit(
+            f"[GAGAL] berkas arsitektur tidak ditemukan: {jalur}\n"
+            f"  folder kerja : {Path.cwd()}\n"
+            f"  yang dicoba  : {jalur.resolve()}\n"
+            f"  kandidat yang tersedia: {_ada if _ada else '(tidak ada berkas *_model.py)'}\n"
+            "  Contoh: --arsitektur experiments/resnet34_model.py")
 
     import importlib.util
     nama_modul = "arsitektur_uji_" + jalur.stem.replace("-", "_")
