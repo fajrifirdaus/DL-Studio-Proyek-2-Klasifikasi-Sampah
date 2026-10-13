@@ -712,6 +712,20 @@ def main() -> None:
     # va_dl dibuat dengan batch yang mungkin sudah diturunkan di atas
 
     # ---------- 3. MODEL ----------
+    # Periksa & bersihkan memori GPU DULU, SEBELUM model dibuat. Kalau tidak,
+    # sisa memori proses/percobaan sebelumnya membuat model.to(device) gagal
+    # dengan pesan CUDA out of memory yang membingungkan.
+    if device.type == "cuda":
+        torch.cuda.empty_cache()
+        bebas, total = torch.cuda.mem_get_info()
+        print(f"[memori] GPU bebas {bebas / 1e9:.2f} GB dari {total / 1e9:.2f} GB")
+        if bebas < 4e9:
+            raise SystemExit(
+                f"[GAGAL] memori GPU masih terpakai (hanya {bebas / 1e9:.2f} GB bebas "
+                f"dari {total / 1e9:.2f} GB).\n"
+                "  Penyebab paling umum: percobaan sebelumnya belum dibebaskan.\n"
+                "  SOLUSI: mulai ulang proses/runtime (di Colab: Runtime -> Restart session),\n"
+                "  lalu jalankan lagi.")
     model = get_model()
     info_salin = None
     if not a.scratch:
@@ -723,13 +737,8 @@ def main() -> None:
         if info_salin["disalin"] < 0.5 * info_salin["total_kunci_model_kita"]:
             print("[PERINGATAN] sangat sedikit tensor yang tersalin - periksa nama backbone!")
     model.to(device)
-
-    # Bersihkan sisa memori GPU dari proses/percobaan sebelumnya. Tanpa ini,
-    # sisa memori ikut menekan jatah selama latih.
-    if device.type == "cuda":
-        torch.cuda.empty_cache()
-        bebas, total = torch.cuda.mem_get_info()
-        print(f"[memori] GPU bebas {bebas / 1e9:.1f} GB dari {total / 1e9:.1f} GB")
+    print(f"[memori] model sudah di GPU "
+          f"({sum(p.numel() for p in model.parameters()):,} parameter)")
 
     if a.freeze_epochs:
         set_backbone_trainable(model, False)
