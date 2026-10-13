@@ -1,0 +1,20 @@
+# Dependensi untuk melatih dan menguji model (jalankan dari root repo).
+#
+# ResNet-18 diambil dari torchvision, jadi TIDAK ada paket tambahan
+# di luar paket dasar yang sudah disiapkan asisten.
+
+numpy
+pillow
+torch
+torchvision
+
+# ============================================================
+# CATATAN
+# ============================================================
+# - Baris komentar SELALU di awal baris, jangan di ujung baris paket.
+#   Komentar di ujung baris ikut terbaca sebagai nama paket dan bisa
+#   membuat pemasangan gagal.
+# - Untuk GPU NVIDIA, pasang torch versi CUDA sesuai mesin, contoh:
+#       pip install torch torchvision --index-url https://download.pytorch.org/whl/cu121
+# - Berkas submission/requirements.txt dipakai asisten saat evaluasi.
+#   Berkas ini (root) dipakai kalian sendiri untuk melatih.

@@ -43,19 +43,31 @@ my_val/
 # Sumber gambar dari GDrive (berisi daftar URL gambar)
 train_sources.csv
 
-# =============================================================================
+# Catatan: pembagian data (train/validasi) TIDAK memakai berkas split, jadi
+# tidak ada yang perlu di-commit untuk itu - dihitung saat melatih dari seed.
+
+# ============================================================================
 # 2) BOBOT MODEL
-# =============================================================================
-# Model hasil latihan boleh di-commit SELAMA < 100 MB (batas GitHub).
-# Kalau model akhir > 100 MB (mis. backbone besar), unggah sebagai
-# GitHub Release / Git LFS lalu tulis tautannya di README.
-# Baris di bawah sengaja dikomentari; buka komentar HANYA kalau bobot
-# mau dititipkan di Release/LFS, bukan di repo.
-# submission/model.pth
-# *.pth
-# *.pt
-# *.ckpt
-# *.safetensors
+# ============================================================================
+# ATURAN GAYA "ALLOWLIST" (lebih aman daripada daftar hitam):
+#   *.pth            -> SEMUA bobot diabaikan (termasuk kandidat di runs/)
+#   !submission/model.pth -> KECUALI bobot submission, itu yang harus masuk repo
+#
+# Kenapa begitu? Karena percobaan menghasilkan banyak berkas bobot besar yang
+# tidak perlu di-commit; yang perlu hanya SATU: submission/model.pth.
+#
+# Batas ukuran:
+#   - GitHub menolak berkas > 100 MB.
+#   - Aturan studio: submission/model.pth maksimal 500 MB.
+#   - Kalau model.pth > 100 MB -> jangan commit, pakai GitHub Release / Git LFS,
+#     lalu tulis tautannya di README.
+#   - ResNet-18 kita: +-44,7 MB, jadi AMAN di-commit langsung.
+*.pth
+*.pt
+*.ckpt
+*.safetensors
+!submission/model.pth
+runs/_arsip/
 
 # =============================================================================
 # 3) SAMPAH TEKNIS
@@ -69,9 +81,14 @@ venv/
 env/
 .pytest_cache/
 *.log
+pip_cache/
 runs/
+experiments/out/
 wandb/
 lightning_logs/
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# Berkas ZIP dataset (jangan ikut ke repo publik)
+*.zip
