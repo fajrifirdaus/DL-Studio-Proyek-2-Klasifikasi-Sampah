@@ -27,3 +27,22 @@ def get_transform():
         transforms.ToTensor(),
         transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
     ])
+
+# ============================================================
+# CATATAN UNTUK KELOMPOK (bukan bagian yang dinilai asisten)
+# ============================================================
+# Berkas ini adalah SALINAN dari contoh resmi. Kalau nanti kalian menemukan
+# arsitektur yang lebih baik lewat experiments/, SALIN hasilnya ke sini:
+#
+#   1. ganti isi get_model() dengan versi kandidat
+#   2. PASTIKAN get_transform() di sini SAMA dengan transform kandidat
+#      (kalau resolusi latihnya 224, tetap Resize(256) + CenterCrop(224))
+#   3. latih ulang supaya model.pth cocok:
+#        di notebook : CFG["tulis_submission"] = True
+#        di laptop   : python train.py --data "<...>/train"
+#   4. uji: python evaluate.py --submission ./submission --data ./my_val
+#
+# PENTING: model.py dan model.pth WAJIB berpasangan. Kalau model.py jadi
+# ResNet-34 tapi model.pth masih bobot ResNet-18, evaluasi asisten GAGAL
+# (load_state_dict strict=True) dan skor putaran itu hilang.
+# ============================================================
