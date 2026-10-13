@@ -21,7 +21,7 @@ yang didaftarkan. **NIM wajib tercantum** — README tanpa NIM tidak dapat dieva
 | **Arsitektur / backbone** | **ResNet-18** pretrained ImageNet (`torchvision`, bobot `IMAGENET1K_V1`) |
 | **Strategi pelatihan** | Full fine-tuning (seluruh layer dilatih) setelah 3 epoch *linear probing*; AdamW, warmup linear + cosine decay, 30 epoch maksimal, early stopping |
 | **Pemilihan model** | Berdasarkan **macro-F1 validasi** (bukan akurasi), sesuai metrik penilaian |
-| **Augmentasi** | RandomResizedCrop(224, 0.70–1.00), horizontal flip, rotasi ±15°, ColorJitter, RandomErasing |
+| **Augmentasi** | RandomResizedCrop(224, 0.60–1.00), horizontal flip, ColorJitter, RandomErasing |
 | **Penanganan kelas tidak seimbang** | Bobot kelas `N / (C × n_c)` pada CrossEntropyLoss, dihitung hanya dari data latih |
 | **Label noise** | Label smoothing 0,1 |
 | **Data tambahan** | **Tidak ada** — hanya train set dari starter kit (sesuai ketentuan, dataset tidak diunggah ulang) |
@@ -99,8 +99,8 @@ kelompok dengan 10 perbaikan berikut.
 | 2 | `my_val/` lama dipakai ulang tanpa dicek (split kedaluwarsa) | Penanda `.split.json`; split dibangun ulang bila seed/frac berubah |
 | 3 | Model terbaik dipilih berdasarkan **akurasi** | Dipilih berdasarkan **macro-F1** (metrik penilaian asisten) |
 | 4 | Tanpa pembobotan kelas → kelas minoritas kalah | **Bobot kelas** `N/(C×n_c)`, hanya dari data latih |
-| 5 | Tanpa early stopping | **Early stopping** (patience 6, `min_delta` 0,001, aktif mulai epoch 8) |
-| 6 | `RandomResizedCrop(scale=0.6)` terlalu agresif untuk gambar 800×800 | `scale=0.70–1.00` + rotasi ringan + RandomErasing |
+| 5 | Tanpa early stopping | Early stopping (patience 8, aktif mulai epoch 10) + model terbaik disimpan **sejak epoch 1** |
+| 6 | Augmentasi belum mengikuti resep terbaik yang terbukti | Resep disamakan: crop 0.60–1.00, flip, ColorJitter 0.3/0.3/0.3/0.05, RandomErasing p=0.25 (rotasi & crop sempit dibuang) |
 | 7 | Tidak ada pemeriksaan kontrak transform | Resolusi `get_transform()` dicek otomatis terhadap resolusi latih (mismatch = gagal cepat, bukan akurasi turun diam-diam) |
 | 8 | Salin bobot hardcode awalan `fc.` (khusus ResNet) | Salin berbasis kecocokan bentuk tensor + dilaporkan jumlahnya |
 | 9 | Tidak pernah diuji lewat `evaluate.py` sebelum tenggat | Pelatihan memakai `get_model()`/`get_transform()` dari `submission/model.py`, jadi mismatch kontrak terdeteksi lebih awal |

@@ -20,10 +20,13 @@ APA SAJA CELAH YANG DITUTUP?
      padahal yang dinilai adalah MACRO-F1. Sekarang seleksi memakai macro-F1.
   4. Bobot kelas      - baseline tanpa pembobotan, sehingga kelas minoritas
      (kertas_kardus) kalah. Sekarang bobot kelas = N / (C * n_c).
-  5. Early stopping   - baseline tidak punya. Sekarang ada patience + min_delta
-     + start_epoch, sehingga tidak berhenti prematur.
-  6. Augmentasi       - baseline crop agresif (0.6-1.0) pada gambar yang sudah
-     800x800. Sekarang 0.7-1.0 + rotasi ringan + RandomErasing (oklusi).
+  5. Early stopping   - baseline tidak punya. Sekarang ada patience 8 +
+     start_epoch 10 (early stopping baru aktif setelah pemanasan). Model TERBAIK
+     disimpan sejak epoch 1 tanpa ambang, jadi model bagus di awal tidak terbuang.
+  6. Augmentasi       - resep latih disamakan dengan acuan yang terbukti
+     (crop 0.60-1.00, flip, ColorJitter 0.3/0.3/0.3/0.05, RandomErasing 0.25).
+     Rotasi dan crop sempit dari versi lama DIBUANG karena tidak terbukti
+     menolong dan menambah waktu latih.
   7. Kontrak transform - resolusi get_transform() dicek otomatis terhadap
      resolusi latih, supaya tidak ada penurunan akurasi diam-diam.
   8. Salin bobot      - baseline meng-hardcode "fc." dari resnet18. Sekarang
@@ -136,24 +139,31 @@ def get_device() -> torch.device:
 def build_train_transform(img_size: int = IMG_SIZE) -> transforms.Compose:
     """Augmentasi untuk data latih pada resolusi `img_size`.
 
-    Catatan desain:
-      - Crop 0.70-1.00 (bukan 0.60 seperti baseline) karena gambar dataset ini
-        sudah besar (median 800x800) dan objeknya memenuhi bidang gambar.
-      - RandomHorizontalFlip DIPERTAHANKAN: kelima kelas (botol, gelas, kertas,
-        saset, styrofoam) tidak punya ciri yang berubah makna bila dicerminkan.
-        Ciri pembeda "berleher botol" vs "tanpa leher" tetap berlaku setelah
-        dicerminkan. (Beda dengan dataset isyarat tangan, di mana flip merusak.)
-      - Rotasi ringan 15 derajat: objek sampah difoto dari berbagai sudut.
-      - RandomErasing: melatih model tetap benar bila objek tertutup sebagian.
+    RESEP INI SENGAJA DISAMAKAN dengan acuan yang sudah terbukti pada dataset
+    yang sama (ResNet-18, 15 epoch -> macro-F1 0,9373). Tiga hal yang DIBUANG
+    dari versi sebelumnya karena tidak terbukti menolong:
+
+      - RandomResizedCrop: skala 0.60-1.00 (versi lama 0.70-1.00). Rentang lebih
+        lebar -> model tidak sempat menghafal latar belakang, dan pada dataset
+        kecil (2.753 gambar) itu menolong. Argumen `ratio` juga dibuang karena
+        acuan memakai bawaan.
+      - RandomRotation DIBUANG. Menambah waktu latih tanpa bukti menaikkan
+        macro-F1; acuan yang tembus 0,9373 tidak memakainya.
+      - ColorJitter dinaikkan ke 0.3/0.3/0.3/0.05 dan RandomErasing ke p=0.25
+        (versi lama 0.3/0.3/0.2/0.02 dan p=0.20) supaya setara acuan.
+
+    RandomHorizontalFlip DIPERTAHANKAN: kelima kelas (botol, gelas, kertas,
+    saset, styrofoam) tidak punya ciri yang berubah makna bila dicerminkan.
+    Ciri pembeda "berleher botol" vs "tanpa leher" tetap berlaku setelah
+    dicerminkan. (Beda dengan dataset isyarat tangan, di mana flip merusak.)
     """
     return transforms.Compose([
-        transforms.RandomResizedCrop(img_size, scale=(0.70, 1.00), ratio=(0.80, 1.25)),
+        transforms.RandomResizedCrop(img_size, scale=(0.60, 1.00)),
         transforms.RandomHorizontalFlip(),
-        transforms.RandomRotation(15),
-        transforms.ColorJitter(brightness=0.3, contrast=0.3, saturation=0.2, hue=0.02),
+        transforms.ColorJitter(brightness=0.3, contrast=0.3, saturation=0.3, hue=0.05),
         transforms.ToTensor(),
         transforms.Normalize(IMAGENET_MEAN, IMAGENET_STD),
-        transforms.RandomErasing(p=0.20, scale=(0.02, 0.12)),
+        transforms.RandomErasing(p=0.25),
     ])
 
 
@@ -337,11 +347,23 @@ def head_param_ids(model) -> set:
     return set()
 
 
-def set_backbone_trainable(model, trainable: bool) -> None:
-    """Buka/tutup gradien backbone; kepala (head) selalu dilatih."""
+def set_backbone_trainable(model, trainable: bool) -> list:
+    """Buka/tutup gradien backbone; kepala (head) selalu dilatih.
+
+    PENTING - mengembalikan daftar parameter yang BARU dibuka. Parameter itu
+    WAJIB dimasukkan ke optimizer lewat `opt.add_param_group(...)`. Tanpa itu,
+    gradiennya dihitung tetapi dibuang, sehingga backbone seolah "dibuka" tapi
+    tidak pernah dilatih. (Ini bug yang membuat akurasi mentok: optimizer
+    terlanjur dibuat hanya dengan kepala.)
+    """
     head_ids = head_param_ids(model)
+    baru = []
     for p in model.parameters():
-        p.requires_grad = bool(trainable) or (id(p) in head_ids)
+        mau = bool(trainable) or (id(p) in head_ids)
+        if mau and not p.requires_grad:
+            baru.append(p)
+        p.requires_grad = mau
+    return baru
 
 
 def salin_bobot_imagenet(model, backbone: str) -> dict:
@@ -508,11 +530,12 @@ def main() -> None:
     ap.add_argument("--kfolds", type=int, default=0, help="0 = split tunggal")
     ap.add_argument("--fold", type=int, default=1)
     ap.add_argument("--seed", type=int, default=42)
-    ap.add_argument("--patience", type=int, default=6)
-    ap.add_argument("--start-epoch", type=int, default=8,
+    ap.add_argument("--patience", type=int, default=8)
+    ap.add_argument("--start-epoch", type=int, default=10,
                     help="epoch minimum sebelum early stopping boleh aktif")
     ap.add_argument("--min-delta", type=float, default=0.001,
-                    help="kenaikan macro-F1 minimum agar dianggap membaik")
+                    help="kenaikan macro-F1 minimum agar dianggap MAJU (hanya untuk "
+                         "early stopping; model terbaik selalu disimpan tanpa ambang)")
     ap.add_argument("--freeze-epochs", type=int, default=0,
                     help="linear probing selama N epoch, lalu buka seluruh backbone")
     ap.add_argument("--scratch", action="store_true",
@@ -590,7 +613,9 @@ def main() -> None:
     print(f"  batch          : {a.batch_size}  |  weight decay {a.weight_decay}")
     print(f"  loss           : CrossEntropy (label smoothing {a.label_smoothing}"
           + (", bobot kelas AKTIF)" if a.class_weight else ", bobot kelas mati)"))
-    print(f"  seleksi model  : macro-F1  |  patience {a.patience}  |  min_delta {a.min_delta}")
+    print(f"  seleksi model  : macro-F1 (disimpan sejak epoch 1, tanpa ambang)")
+    print(f"  early stopping : patience {a.patience}  |  aktif mulai epoch {a.start_epoch}"
+          f"  |  min_delta {a.min_delta}")
     print(f"  hasil          : {run_dir}")
     print(f"  bobot          : {out_path}   [{mode_out}]")
 
@@ -658,8 +683,10 @@ def main() -> None:
           f"(cocok dengan resolusi latih {img_latih}x{img_latih}) OK")
 
     va_ds = PathListDataset(val_items, val_tf) if val_items else None
+    # drop_last=True: buang batch terakhir yang tidak penuh. Batch kecil
+    # (mis. 4 gambar) membuat statistik BatchNorm goyah saat latih.
     tr_dl = DataLoader(tr_ds, a.batch_size, shuffle=True, num_workers=workers,
-                       pin_memory=(device.type == "cuda"), drop_last=False)
+                       pin_memory=(device.type == "cuda"), drop_last=True)
     va_dl = (DataLoader(va_ds, a.batch_size, shuffle=False, num_workers=workers,
                         pin_memory=(device.type == "cuda")) if va_ds else None)
 
@@ -717,11 +744,20 @@ def main() -> None:
     print("\n" + "-" * 68)
 
     for ep in range(1, epochs + 1):
-        if a.freeze_epochs and ep == a.freeze_epochs + 1:
-            set_backbone_trainable(model, True)
-            print(f"  [strategi] epoch {ep}: seluruh backbone dibuka (full fine-tuning)")
-
         lr_now = lr_schedule(ep, a.warmup, a.lr, a.eta_min, epochs)
+
+        if a.freeze_epochs and ep == a.freeze_epochs + 1:
+            # Backbone dibuka -> WAJIB dimasukkan ke optimizer, kalau tidak
+            # parameter baru tidak akan pernah ikut diperbarui.
+            baru = set_backbone_trainable(model, True)
+            if baru:
+                opt.add_param_group({"params": baru, "lr": lr_now,
+                                     "weight_decay": a.weight_decay})
+            total = sum(p.numel() for g in opt.param_groups for p in g["params"])
+            print(f"  [strategi] epoch {ep}: seluruh backbone dibuka -> "
+                  f"{len(baru)} tensor masuk optimizer "
+                  f"(total {total:,} parameter dilatih)")
+
         for g in opt.param_groups:
             g["lr"] = lr_now
 
@@ -742,14 +778,21 @@ def main() -> None:
             row.update({"val_loss": m["loss"], "val_acc": m["acc"],
                         "val_macro_f1": m["macro_f1"]})
             tanda = ""
-            if ep >= start_epoch:
+            # SIMPAN model terbaik sejak epoch 1 (tanpa min_delta).
+            # Versi lama baru menyimpan mulai epoch `start_epoch` dan memakai
+            # ambang min_delta, sehingga model terbaik di epoch awal terbuang.
+            if m["macro_f1"] > best_f1:
+                best_f1, best_ep, best_acc = m["macro_f1"], ep, m["acc"]
+                no_improve = 0
+                out_path.parent.mkdir(parents=True, exist_ok=True)
+                torch.save(model.state_dict(), out_path)
+                tersimpan = True
+                tanda = "  <-- TERBAIK, disimpan"
+            elif ep >= start_epoch:
+                # Early stopping baru dihitung setelah pemanasan epoch awal.
+                # min_delta di sini berarti "kenaikan minimum agar dianggap maju".
                 if m["macro_f1"] > best_f1 + a.min_delta:
-                    best_f1, best_ep, best_acc = m["macro_f1"], ep, m["acc"]
                     no_improve = 0
-                    out_path.parent.mkdir(parents=True, exist_ok=True)
-                    torch.save(model.state_dict(), out_path)
-                    tersimpan = True
-                    tanda = "  <-- TERBAIK, disimpan"
                 else:
                     no_improve += 1
             print(f"  epoch {ep:2d}/{epochs} | train {tr_loss:.4f}/{tr_acc:.4f} | "
