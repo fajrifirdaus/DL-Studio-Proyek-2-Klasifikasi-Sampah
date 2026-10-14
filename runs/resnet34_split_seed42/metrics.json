@@ -1,0 +1,82 @@
+{
+  "backbone": "resnet34",
+  "pretrained": true,
+  "epochs_dijalankan": 30,
+  "tag": "resnet34_split_seed42",
+  "best_epoch": 22,
+  "val_macro_f1": 0.9408231905330521,
+  "val_acc": 0.9418886198547215,
+  "per_class_f1": {
+    "botol_plastik": 0.9673202614379085,
+    "gelas_plastik": 0.9259259259259259,
+    "kertas_kardus": 0.9245283018867925,
+    "saset_kemasan": 0.9400000000000001,
+    "styrofoam": 0.9463414634146341
+  },
+  "confusion_matrix": [
+    [
+      74,
+      2,
+      0,
+      1,
+      1
+    ],
+    [
+      0,
+      75,
+      1,
+      0,
+      2
+    ],
+    [
+      0,
+      3,
+      49,
+      3,
+      0
+    ],
+    [
+      1,
+      2,
+      0,
+      94,
+      4
+    ],
+    [
+      0,
+      2,
+      1,
+      1,
+      97
+    ]
+  ],
+  "config": {
+    "val_frac": 0.15,
+    "kfolds": 0,
+    "fold": 1,
+    "seed": 42,
+    "epochs": 30,
+    "lr": 0.0003,
+    "warmup": 3,
+    "eta_min": 1e-06,
+    "weight_decay": 0.0001,
+    "label_smoothing": 0.1,
+    "batch_size": 32,
+    "patience": 8,
+    "start_epoch": 10,
+    "min_delta": 0.001,
+    "freeze_epochs": 0,
+    "class_weight": true,
+    "scratch": false,
+    "arsitektur": "experiments/resnet34_model.py",
+    "backbone": "resnet34",
+    "tulis_submission": false,
+    "num_workers": 2,
+    "limit": 0,
+    "tag": "resnet34_split_seed42"
+  },
+  "salin_bobot": {
+    "disalin": 216,
+    "dilewati": 2
+  }
+}

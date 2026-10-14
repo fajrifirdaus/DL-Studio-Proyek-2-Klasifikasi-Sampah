@@ -1,0 +1,82 @@
+{
+  "backbone": "efficientnet_v2_s",
+  "pretrained": true,
+  "epochs_dijalankan": 24,
+  "tag": "efficientnet_v2_s_split_seed42",
+  "best_epoch": 16,
+  "val_macro_f1": 0.9617949948804292,
+  "val_acc": 0.9661016949152542,
+  "per_class_f1": {
+    "botol_plastik": 0.9746835443037976,
+    "gelas_plastik": 0.9493670886075949,
+    "kertas_kardus": 0.9245283018867925,
+    "saset_kemasan": 0.9801980198019802,
+    "styrofoam": 0.9801980198019802
+  },
+  "confusion_matrix": [
+    [
+      77,
+      1,
+      0,
+      0,
+      0
+    ],
+    [
+      1,
+      75,
+      2,
+      0,
+      0
+    ],
+    [
+      1,
+      3,
+      49,
+      2,
+      0
+    ],
+    [
+      0,
+      0,
+      0,
+      99,
+      2
+    ],
+    [
+      1,
+      1,
+      0,
+      0,
+      99
+    ]
+  ],
+  "config": {
+    "val_frac": 0.15,
+    "kfolds": 0,
+    "fold": 1,
+    "seed": 42,
+    "epochs": 30,
+    "lr": 0.0003,
+    "warmup": 3,
+    "eta_min": 1e-06,
+    "weight_decay": 0.0001,
+    "label_smoothing": 0.1,
+    "batch_size": 8,
+    "patience": 8,
+    "start_epoch": 10,
+    "min_delta": 0.001,
+    "freeze_epochs": 0,
+    "class_weight": true,
+    "scratch": false,
+    "arsitektur": "experiments/efficientnet_v2s_model.py",
+    "backbone": "efficientnet_v2_s",
+    "tulis_submission": false,
+    "num_workers": 2,
+    "limit": 0,
+    "tag": "efficientnet_v2_s_split_seed42"
+  },
+  "salin_bobot": {
+    "disalin": 780,
+    "dilewati": 2
+  }
+}

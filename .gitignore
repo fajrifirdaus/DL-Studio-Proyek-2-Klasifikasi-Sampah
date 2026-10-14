@@ -61,13 +61,37 @@ train_sources.csv
 #   - Aturan studio: submission/model.pth maksimal 500 MB.
 #   - Kalau model.pth > 100 MB -> jangan commit, pakai GitHub Release / Git LFS,
 #     lalu tulis tautannya di README.
-#   - ResNet-18 kita: +-44,7 MB, jadi AMAN di-commit langsung.
+#   - EfficientNet V2-S kita: 81,7 MB (77,9 MiB) -> AMAN di-commit langsung.
 *.pth
 *.pt
 *.ckpt
 *.safetensors
 !submission/model.pth
-runs/_arsip/
+
+# PENGECUALIAN BUKTI ANGKA — JANGAN DIUBAH TANPA ALASAN.
+# Berkas KECIL di runs/ di-commit sebagai bukti tiap percobaan, supaya angka di
+# README bisa diverifikasi asisten langsung dari repo. Bobot *.pth di folder yang
+# sama TETAP diabaikan.
+#
+# Empat baris pertama WAJIB dalam urutan ini (aturan git: folder yang sudah
+# diabaikan tidak bisa dikecualikan isinya sebelum foldernya "dibuka" kembali):
+#   runs/*        -> abaikan seluruh isi runs/
+#   !runs/*/      -> buka kembali folder percobaannya
+#   runs/*/*      -> abaikan lagi seluruh berkas di dalamnya (termasuk bobot .pth)
+#   !runs/*/<berkas kecil> -> kecualikan hanya berkas bukti berikut
+runs/*
+!runs/*/
+runs/*/*
+!runs/*/config.json
+!runs/*/history.json
+!runs/*/metrics.json
+!runs/*/kurva_pelatihan.png
+
+# Catatan promosi (kandidat apa yang dipasang, skornya berapa) ikut di-commit.
+# Arsip bobot/kode lama di runs/_arsip/<cap-waktu>/ TETAP diabaikan.
+# URUTAN PENTING - aturan terakhir yang menang: abaikan dulu, baru kecualikan.
+runs/_arsip/*
+!runs/_arsip/riwayat.jsonl
 
 # =============================================================================
 # 3) SAMPAH TEKNIS
@@ -82,7 +106,6 @@ env/
 .pytest_cache/
 *.log
 pip_cache/
-runs/
 experiments/out/
 wandb/
 lightning_logs/

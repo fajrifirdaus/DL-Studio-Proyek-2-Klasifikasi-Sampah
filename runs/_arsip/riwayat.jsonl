@@ -1,0 +1,1 @@
+{"waktu": "2026-10-14T16:18:03", "kandidat_bobot": "runs\\efficientnet_v2_s_split_seed42\\efficientnet_v2_s_split_seed42.pth", "kandidat_kode": "experiments\\efficientnet_v2s_model.py", "arsip": "runs\\_arsip\\20261014-161751", "macro_f1_lama": null, "macro_f1_baru": 0.9617949948804292, "macro_f1_terpasang": 0.9617949948804292}
