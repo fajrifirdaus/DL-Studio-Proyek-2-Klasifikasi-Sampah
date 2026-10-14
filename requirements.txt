@@ -1,20 +1,32 @@
 # Dependensi untuk melatih dan menguji model (jalankan dari root repo).
 #
-# ResNet-18 diambil dari torchvision, jadi TIDAK ada paket tambahan
-# di luar paket dasar yang sudah disiapkan asisten.
+# Model (EfficientNet V2-S) diambil dari torchvision, jadi tidak ada paket
+# tambahan di luar paket dasar yang sudah disiapkan asisten.
 
-numpy
+numpy>=1.24
 pillow
-torch
-torchvision
+torch>=2.0
+torchvision>=0.15
+
+# matplotlib hanya dipakai notebooks/train_colab.ipynb untuk menggambar kurva
+# pelatihan dan confusion matrix. train.py dan evaluate.py TIDAK memakainya,
+# jadi baris ini boleh dihapus kalau hanya mau melatih lewat CLI.
+matplotlib
 
 # ============================================================
 # CATATAN
 # ============================================================
+# - Versi minimum torch/torchvision ditulis karena submission/model.py memakai
+#   efficientnet_v2_s dan transforms.Resize(..., antialias=True) yang butuh
+#   torchvision >= 0.13.
 # - Baris komentar SELALU di awal baris, jangan di ujung baris paket.
 #   Komentar di ujung baris ikut terbaca sebagai nama paket dan bisa
 #   membuat pemasangan gagal.
-# - Untuk GPU NVIDIA, pasang torch versi CUDA sesuai mesin, contoh:
+# - Untuk GPU NVIDIA, pasang torch versi CUDA sesuai mesin (sekali saja, lalu
+#   jalankan pip install -r requirements.txt seperti biasa):
 #       pip install torch torchvision --index-url https://download.pytorch.org/whl/cu121
 # - Berkas submission/requirements.txt dipakai asisten saat evaluasi.
 #   Berkas ini (root) dipakai kalian sendiri untuk melatih.
+# - JANGAN hapus baris pengecualian !runs/*/{config,history,metrics}.json dan
+#   !runs/*/kurva_pelatihan.png di .gitignore: itu yang membuat berkas bukti angka
+#   ikut ter-commit (bobot .pth di folder yang sama tetap diabaikan).

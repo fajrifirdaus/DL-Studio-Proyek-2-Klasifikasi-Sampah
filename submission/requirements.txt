@@ -1,21 +1,37 @@
 numpy
 pillow
-torch
-torchvision
+torch>=2.0
+torchvision>=0.15
 
 # ============================================================
-# CATATAN (baris di atas adalah paket yang benar-benar dipasang)
+# CATATAN — BACA SEBELUM MENGUBAH
+# Baris di atas (sebelum komentar pertama) adalah paket yang benar-benar dipasang.
 # ============================================================
-# Submission ini memakai ResNet-18 dari torchvision.
-# Tidak ada paket tambahan di luar paket dasar, jadi TIDAK perlu timm.
 #
-# Menurut FAQ Studio 2, paket dasar yang selalu tersedia di environment
-# asisten: torch, torchvision, timm, pillow, numpy.
+# 1. MODEL SUBMISSION: EfficientNet V2-S dari torchvision.
+#    Bukan ResNet-18 lagi, dan tidak butuh timm. Bobot ImageNet tidak diunduh
+#    saat evaluasi, karena get_model() memakai weights=None (kontrak submission).
 #
-# PENTING soal format berkas ini:
-#   Baris komentar ditulis dengan tanda '#' di AWAL baris, bukan di ujung
-#   baris paket. Alasannya: pemasang paket membuang hanya komentar yang
-#   berada di awal baris. Kalau komentar ditulis di ujung baris
-#   (contoh: numpy  # operasi array), teks komentarnya ikut terbaca sebagai
-#   nama paket dan pemasangan bisa GAGAL - padahal submission-nya sendiri
-#   tidak bermasalah. Format di atas aman.
+# 2. BATAS VERSI (torch >= 2.0, torchvision >= 0.15) dipilih agar pasangan
+#    efficientnet_v2_s + transforms.Resize(384, antialias=True) dijamin tersedia
+#    (keduanya sudah ada sejak torchvision 0.13; angka 0.15 memberi margin aman).
+#    Batas longgar seperti ini TIDAK memaksa pemasangan ulang kalau environment
+#    sudah punya versi lebih tinggi - itu memang tujuannya.
+#
+# 3. JANGAN menulis torch versi GPU/CUDA di berkas ini.
+#    Environment asisten sudah menyediakan paket dasar (torch, torchvision, timm,
+#    pillow, numpy) dan bisa saja CPU-only. Menambahkan
+#    --index-url https://download.pytorch.org/whl/cu121 di sini berisiko
+#    MENURUNKAN versi torch yang sudah ada, dan waktu unduhannya ikut memakan
+#    batas 15 menit per putaran evaluasi.
+#
+# 4. FORMAT: komentar wajib di AWAL baris, jangan di ujung baris paket.
+#    Pemroses requirements membuang hanya komentar yang berada di awal baris.
+#    Kalau ditulis di ujung baris (contoh: numpy  # operasi array), teks
+#    komentarnya ikut dibaca sebagai nama paket dan pemasangan bisa GAGAL -
+#    padahal submission-nya sendiri tidak bermasalah.
+#
+# 5. numpy dan pillow disertakan karena keduanya paket dasar environment asisten;
+#    pillow dipakai evaluate.py (PIL) dan torchvision, numpy dipakai torch.
+#    Kalau arsitektur submission diganti menjadi model yang butuh paket lain
+#    (misalnya timm), tambahkan paket itu di sini.
