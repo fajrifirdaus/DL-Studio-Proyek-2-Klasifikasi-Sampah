@@ -340,7 +340,8 @@ def class_weight_tensor(labels: list, device) -> tuple:
 # ============================================================
 def head_param_ids(model) -> set:
     """Kumpulkan id parameter kepala (fc / classifier) untuk keperluan freezing."""
-    for nama in ("fc", "classifier"):
+    # "head" = kepala model timm (mis. ConvNeXt V2: head.norm + head.fc)
+    for nama in ("fc", "classifier", "head"):
         head = getattr(model, nama, None)
         if head is not None:
             return {id(p) for p in head.parameters()}
@@ -729,7 +730,11 @@ def main() -> None:
     model = get_model()
     info_salin = None
     if not a.scratch:
-        info_salin = salin_bobot_imagenet(model, a.backbone)
+        # Berkas experiments/ boleh menyediakan pemuat bobot sendiri, mis. untuk
+        # backbone timm (ConvNeXt V2) yang tidak ada di torchvision. Kalau tidak
+        # ada, jalur lama (torchvision IMAGENET1K_V1) dipakai seperti biasa.
+        pemuat = getattr(modul_arsitektur, "muat_bobot_pretrained", None)
+        info_salin = pemuat(model) if pemuat else salin_bobot_imagenet(model, a.backbone)
         print(f"[bobot] {a.backbone}: {info_salin['disalin']} tensor disalin dari ImageNet, "
               f"{len(info_salin['dilewati'])} dilewati (termasuk kepala)")
         if info_salin["dilewati"][:5]:
