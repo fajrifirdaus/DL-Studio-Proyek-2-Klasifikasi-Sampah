@@ -1,0 +1,58 @@
+{
+  "backbone": "convnextv2_tiny",
+  "pretrained": true,
+  "arsitektur": "experiments/convnextv2_tiny_model.py",
+  "epochs_dijalankan": 13,
+  "tag": "convnextv2_tiny_384_split_seed42",
+  "salin_bobot": {
+    "disalin": 198,
+    "dilewati": 2
+  },
+  "best_epoch": 8,
+  "val_macro_f1": 0.9725427174248715,
+  "val_acc": 0.9757869249394673,
+  "per_class_f1": {
+    "botol_plastik": 0.9811320754716981,
+    "gelas_plastik": 0.967741935483871,
+    "kertas_kardus": 0.9433962264150944,
+    "saset_kemasan": 0.9852216748768472,
+    "styrofoam": 0.9852216748768472
+  },
+  "confusion_matrix": [
+    [
+      78,
+      0,
+      0,
+      0,
+      0
+    ],
+    [
+      2,
+      75,
+      1,
+      0,
+      0
+    ],
+    [
+      0,
+      2,
+      50,
+      1,
+      2
+    ],
+    [
+      1,
+      0,
+      0,
+      100,
+      0
+    ],
+    [
+      0,
+      0,
+      0,
+      1,
+      100
+    ]
+  ]
+}
