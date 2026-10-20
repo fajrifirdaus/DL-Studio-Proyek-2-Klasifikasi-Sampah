@@ -475,8 +475,12 @@ def lr_schedule(epoch: int, warmup: int, base_lr: float, eta_min: float,
 # ============================================================
 # SATU EPOCH LATIH & EVALUASI
 # ============================================================
-def train_one_epoch(model, loader, loss_fn, opt, device) -> tuple:
-    """Latih satu epoch. Return (loss rata-rata, akurasi latih)."""
+def train_one_epoch(model, loader, loss_fn, opt, device, clip_grad: float = 0.0) -> tuple:
+    """Latih satu epoch. Return (loss rata-rata, akurasi latih).
+
+    clip_grad > 0: batasi norma gradien (dibutuhkan ConvNeXt V2 dengan batch kecil;
+    tanpa ini pelatihan bisa runtuh ke tebakan acak di tengah jalan).
+    """
     model.train()
     total_loss, benar, total = 0.0, 0, 0
     for x, y in loader:
@@ -486,6 +490,8 @@ def train_one_epoch(model, loader, loss_fn, opt, device) -> tuple:
         logits = model(x)
         loss = loss_fn(logits, y)
         loss.backward()
+        if clip_grad > 0:
+            torch.nn.utils.clip_grad_norm_(model.parameters(), clip_grad)
         opt.step()
         total_loss += loss.item() * y.size(0)
         benar += (logits.argmax(1) == y).sum().item()
@@ -532,6 +538,8 @@ def main() -> None:
     ap.add_argument("--warmup", type=int, default=3, help="epoch warmup LR")
     ap.add_argument("--weight-decay", type=float, default=1e-4)
     ap.add_argument("--label-smoothing", type=float, default=0.1)
+    ap.add_argument("--clip-grad", type=float, default=0.0,
+                    help="batas norma gradien; 0 = mati (bawaan, perilaku lama)")
     ap.add_argument("--batch-size", type=int, default=32)
     ap.add_argument("--val-frac", type=float, default=0.15)
     ap.add_argument("--kfolds", type=int, default=0, help="0 = split tunggal")
@@ -631,6 +639,7 @@ def main() -> None:
         "backbone": a.backbone, "arsitektur": a.arsitektur or "submission/model.py",
         "epochs": a.epochs, "lr": a.lr, "eta_min": a.eta_min, "warmup": a.warmup,
         "weight_decay": a.weight_decay, "label_smoothing": a.label_smoothing,
+        "clip_grad": a.clip_grad,
         "batch_size": a.batch_size, "val_frac": a.val_frac, "kfolds": a.kfolds,
         "fold": a.fold, "seed": a.seed, "patience": a.patience,
         "start_epoch": a.start_epoch, "min_delta": a.min_delta,
@@ -804,7 +813,7 @@ def main() -> None:
             g["lr"] = lr_now
 
         t0 = time.time()
-        tr_loss, tr_acc = train_one_epoch(model, tr_dl, loss_fn, opt, device)
+        tr_loss, tr_acc = train_one_epoch(model, tr_dl, loss_fn, opt, device, a.clip_grad)
         row = {"epoch": ep, "lr": lr_now, "train_loss": tr_loss, "train_acc": tr_acc}
 
         if va_dl is None:
