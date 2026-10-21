@@ -2,19 +2,21 @@ numpy
 pillow
 torch>=2.0
 torchvision>=0.15
+timm>=0.9
 
 # ============================================================
 # CATATAN — BACA SEBELUM MENGUBAH
 # Baris di atas (sebelum komentar pertama) adalah paket yang benar-benar dipasang.
 # ============================================================
 #
-# 1. MODEL SUBMISSION: EfficientNet V2-S dari torchvision.
-#    Bukan ResNet-18 lagi, dan tidak butuh timm. Bobot ImageNet tidak diunduh
-#    saat evaluasi, karena get_model() memakai weights=None (kontrak submission).
+# 1. MODEL SUBMISSION: EVA-02 Small @336 dari timm (sejak Preview 2).
+#    timm WAJIB ada: get_model() memanggil timm.create_model("eva02_small_patch14_336",
+#    pretrained=False) -> TIDAK mengunduh bobot saat evaluasi (kontrak submission).
+#    timm >= 0.9: arsitektur eva02_* tersedia sejak timm 0.9.
 #
 # 2. BATAS VERSI (torch >= 2.0, torchvision >= 0.15) dipilih agar pasangan
-#    efficientnet_v2_s + transforms.Resize(384, antialias=True) dijamin tersedia
-#    (keduanya sudah ada sejak torchvision 0.13; angka 0.15 memberi margin aman).
+#    transforms.Resize/CenterCrop + InterpolationMode.BICUBIC dijamin tersedia
+#    (sudah ada sejak torchvision 0.13; angka 0.15 memberi margin aman).
 #    Batas longgar seperti ini TIDAK memaksa pemasangan ulang kalau environment
 #    sudah punya versi lebih tinggi - itu memang tujuannya.
 #
