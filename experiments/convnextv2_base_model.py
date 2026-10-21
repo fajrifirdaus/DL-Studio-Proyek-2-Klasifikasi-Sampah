@@ -20,6 +20,7 @@ import torch.nn as nn
 from torchvision import transforms
 
 BACKBONE = "convnextv2_base"
+ARCH = "convnextv2_base"                          # arsitektur saja (dipakai get_model)
 TIMM_NAME = "convnextv2_base.fcmae_ft_in22k_in1k"
 IMG_SIZE = 224
 RESIZE = 256                    # crop_pct 0.875 seperti konfigurasi timm
@@ -29,7 +30,9 @@ STD = (0.229, 0.224, 0.225)
 
 
 def get_model() -> nn.Module:
-    return timm.create_model(TIMM_NAME, pretrained=False,
+    # Nama arsitektur TANPA tag pretrained -> jalan juga di timm versi lama
+    # (tag ".fcmae_ft_..." baru dikenal timm >= 0.9). Bobot tetap sama persis.
+    return timm.create_model(ARCH, pretrained=False,
                              num_classes=NUM_CLASSES, drop_path_rate=0.2)
 
 

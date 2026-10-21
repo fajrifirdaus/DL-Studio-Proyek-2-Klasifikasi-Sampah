@@ -32,7 +32,8 @@ import timm
 import torch.nn as nn
 from torchvision import transforms
 
-BACKBONE = "convnextv2_tiny"            # label untuk nama run/tag
+BACKBONE = "convnextv2_tiny"
+ARCH = "convnextv2_tiny"                          # arsitektur saja (dipakai get_model)            # label untuk nama run/tag
 TIMM_NAME = "convnextv2_tiny.fcmae_ft_in22k_in1k_384"
 IMG_SIZE = 384
 NUM_CLASSES = 5
@@ -42,7 +43,9 @@ STD = (0.229, 0.224, 0.225)
 
 def get_model() -> nn.Module:
     """Arsitektur saja (tanpa unduh bobot). Kepala 5 kelas."""
-    return timm.create_model(TIMM_NAME, pretrained=False,
+    # Nama arsitektur TANPA tag pretrained -> jalan juga di timm versi lama
+    # (tag ".fcmae_ft_..." baru dikenal timm >= 0.9). Bobot tetap sama persis.
+    return timm.create_model(ARCH, pretrained=False,
                              num_classes=NUM_CLASSES, drop_path_rate=0.1)
 
 
