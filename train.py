@@ -136,7 +136,7 @@ def get_device() -> torch.device:
     return torch.device("cpu")
 
 
-def build_train_transform(img_size: int = IMG_SIZE) -> transforms.Compose:
+def build_train_transform(img_size: int = IMG_SIZE, mean=None, std=None) -> transforms.Compose:
     """Augmentasi untuk data latih pada resolusi `img_size`.
 
     RESEP INI SENGAJA DISAMAKAN dengan acuan yang sudah terbukti pada dataset
@@ -162,7 +162,9 @@ def build_train_transform(img_size: int = IMG_SIZE) -> transforms.Compose:
         transforms.RandomHorizontalFlip(),
         transforms.ColorJitter(brightness=0.3, contrast=0.3, saturation=0.3, hue=0.05),
         transforms.ToTensor(),
-        transforms.Normalize(IMAGENET_MEAN, IMAGENET_STD),
+        # mean/std mengikuti berkas arsitektur bila disediakan (mis. EVA-02 memakai
+        # normalisasi CLIP); bawaan tetap ImageNet -> run lama tidak berubah.
+        transforms.Normalize(mean or IMAGENET_MEAN, std or IMAGENET_STD),
         transforms.RandomErasing(p=0.25),
     ])
 
@@ -693,7 +695,11 @@ def main() -> None:
     if img_latih != IMG_SIZE:
         print(f"\n[arsitektur] resolusi {img_latih}x{img_latih} (bukan {IMG_SIZE}) "
               "-> augmentasi latih disesuaikan")
-    tr_tf = build_train_transform(img_latih)
+    norm_mean = getattr(modul_arsitektur, "MEAN", None)
+    norm_std = getattr(modul_arsitektur, "STD", None)
+    tr_tf = build_train_transform(img_latih, norm_mean, norm_std)
+    if norm_mean is not None:
+        print(f"[arsitektur] normalisasi dari berkas: mean {tuple(norm_mean)} std {tuple(norm_std)}")
     tr_ds = PathListDataset(train_items, tr_tf)
     print(f"\n[kontrak] get_transform() -> {H}x{W}  "
           f"(cocok dengan resolusi latih {img_latih}x{img_latih}) OK")
