@@ -1,0 +1,22 @@
+{
+  "backbone": "convnextv2_base",
+  "pretrained": true,
+  "arsitektur": "experiments/convnextv2_base_model.py",
+  "tag": "convnextv2_base_224_split_seed42",
+  "epochs_dijalankan": 14,
+  "salin_bobot": {
+    "disalin": 378,
+    "dilewati": 2
+  },
+  "best_epoch": 10,
+  "val_macro_f1": 0.9739,
+  "val_acc": 0.9758,
+  "per_class_f1": {
+    "botol_plastik": 0.9935,
+    "gelas_plastik": 0.961,
+    "kertas_kardus": 0.9533,
+    "saset_kemasan": 0.995,
+    "styrofoam": 0.9665
+  },
+  "catatan": "Proses latih macet setelah epoch 14 (log berhenti, GPU idle) dan dihentikan manual, sehingga train.py tidak menulis metrics/history. history.json diurai dari log; skor di atas dari evaluasi ulang bobot tersimpan (epoch 10) pada my_val/ 413 gambar."
+}
