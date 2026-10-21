@@ -1,0 +1,21 @@
+{
+  "tag": "ensemble_cnxv2t_v2s",
+  "arsitektur": "experiments/ensemble_cnxv2t_v2s_model.py",
+  "status": "GAGAL - lebih rendah dari ConvNeXt V2-Tiny saja",
+  "komponen": {
+    "cnx": "runs/convnextv2_tiny_384_split_seed42 (0,9725)",
+    "v2s": "runs/efficientnet_v2_s_split_seed42 (0,9618)"
+  },
+  "cara": "rata-rata softmax bobot sama, tanpa latih ulang; bobot fp16 96,7 MB",
+  "hasil_evaluate_py_my_val": {
+    "bilinear": {
+      "macro_f1": 0.965,
+      "accuracy": 0.9685
+    },
+    "bicubic": {
+      "macro_f1": 0.9672,
+      "accuracy": 0.9709
+    }
+  },
+  "kesimpulan": "V2-S menarik turun prediksi Tiny: gelas_plastik dan styrofoam lebih banyak salah; kertas_kardus tidak membaik (50/55). Tidak dipakai."
+}
