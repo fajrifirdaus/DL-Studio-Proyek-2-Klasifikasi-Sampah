@@ -1,0 +1,58 @@
+{
+  "backbone": "dinov2_vits",
+  "pretrained": true,
+  "arsitektur": "experiments/dinov2_vits_model.py",
+  "epochs_dijalankan": 15,
+  "tag": "dinov2_vits_224_lr2e-5_seed42",
+  "salin_bobot": {
+    "disalin": 174,
+    "dilewati": 0
+  },
+  "best_epoch": 14,
+  "val_macro_f1": 0.9538523738936826,
+  "val_acc": 0.9588377723970944,
+  "per_class_f1": {
+    "botol_plastik": 0.974025974025974,
+    "gelas_plastik": 0.9559748427672956,
+    "kertas_kardus": 0.8990825688073394,
+    "saset_kemasan": 0.9805825242718447,
+    "styrofoam": 0.9595959595959594
+  },
+  "confusion_matrix": [
+    [
+      75,
+      1,
+      0,
+      1,
+      1
+    ],
+    [
+      1,
+      76,
+      1,
+      0,
+      0
+    ],
+    [
+      0,
+      3,
+      49,
+      2,
+      1
+    ],
+    [
+      0,
+      0,
+      0,
+      101,
+      0
+    ],
+    [
+      0,
+      1,
+      4,
+      1,
+      95
+    ]
+  ]
+}
