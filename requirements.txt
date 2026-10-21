@@ -1,9 +1,10 @@
 # Dependensi untuk melatih dan menguji model (jalankan dari root repo).
 #
-# Model terpasang (EVA-02 Small) dan kandidat ConvNeXt V2 / DINOv2 memakai timm;
-# EfficientNet V2-S dan ResNet memakai torchvision. Semuanya paket dasar yang
-# sudah disiapkan asisten. timm juga mengunduh bobot pretrained saat LATIH
-# (lewat huggingface_hub, ikut terpasang bersama timm).
+# Model terpasang (EVA-02 Small) dan kandidat ConvNeXt V2 / CAFormer / TinyViT / DINOv2
+# memakai timm; EfficientNet V2-S dan ResNet memakai torchvision. Semuanya paket dasar
+# yang sudah disiapkan asisten. timm juga mengunduh bobot pretrained saat LATIH
+# (lewat huggingface_hub, ikut terpasang bersama timm) - hanya saat latih, tidak saat
+# evaluasi. experiments/buat_val_bersih.py hanya butuh numpy + pillow (sudah di atas).
 
 numpy>=1.24
 pillow

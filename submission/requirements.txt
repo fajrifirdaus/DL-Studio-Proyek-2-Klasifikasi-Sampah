@@ -12,7 +12,8 @@ timm>=0.9
 # 1. MODEL SUBMISSION: EVA-02 Small @336 dari timm (sejak Preview 2).
 #    timm WAJIB ada: get_model() memanggil timm.create_model("eva02_small_patch14_336",
 #    pretrained=False) -> TIDAK mengunduh bobot saat evaluasi (kontrak submission).
-#    timm >= 0.9: arsitektur eva02_* tersedia sejak timm 0.9.
+#    timm >= 0.9: arsitektur eva02_* tersedia sejak timm 0.9. Bobot model.pth adalah
+#    EVA-02 Small yang dilatih pada seluruh data (fp16, dimuat strict=True ke model fp32).
 #
 # 2. BATAS VERSI (torch >= 2.0, torchvision >= 0.15) dipilih agar pasangan
 #    transforms.Resize/CenterCrop + InterpolationMode.BICUBIC dijamin tersedia
