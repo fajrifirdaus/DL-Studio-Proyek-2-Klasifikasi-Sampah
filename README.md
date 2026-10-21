@@ -9,7 +9,7 @@ Deep Learning (IF25-40401) · Teknik Informatika ITERA · Semester Ganjil 2026/2
 | No | Nama Lengkap | NIM | Kontribusi utama |
 |----|--------------|-----|------------------|
 | 1  | Muhammad Fadhilah Akbar | 123140003 | `train.py` (perbaikan celah baseline: seleksi macro-F1, bobot kelas, early stopping), `notebooks/train_colab.ipynb` (alur Colab), `experiments/` (kandidat ResNet-34 & EfficientNet V2-S, `promote.py`), pelatihan kedua kandidat | 
-| 2  | Muhammad Fajri Firdaus  | 123140050 | `submission/` (EfficientNet V2-S @384 + bobot terlatih), `evaluate.py` (uji kontrak submission), `README.md` + dokumentasi subfolder, verifikasi bebas kontaminasi split validasi (diagnostik kebocoran & McNemar) |
+| 2  | Muhammad Fajri Firdaus  | 123140050 | `submission/` (EVA-02 Small @336 + bobot terlatih), `evaluate.py` (uji kontrak submission), `README.md` + dokumentasi subfolder, verifikasi bebas kontaminasi split validasi (diagnostik kebocoran & McNemar) |
 
 Repo: https://github.com/fajrifirdaus/DL-Studio-Proyek-2-Klasifikasi-Sampah
 
@@ -18,7 +18,7 @@ Repo: https://github.com/fajrifirdaus/DL-Studio-Proyek-2-Klasifikasi-Sampah
 | Butir | Isi |
 |---|---|
 | **Arsitektur / backbone** | **EVA-02 Small @336** (`timm` `eva02_small_patch14_336`), pretrained MIM ImageNet-22k → fine-tune ImageNet-1k (`mim_in22k_ft_in1k`); sejak Preview 2. Preview 1: EfficientNet V2-S (torchvision) |
-| **Strategi pelatihan** | Full fine-tuning (seluruh layer dilatih); AdamW lr 2e-5, weight decay 0,05, warmup 1 epoch + cosine decay, gradient clipping 1,0. Model terpasang dilatih **15 epoch pada 100% data (2.753 gambar)** tanpa validasi, bobot = epoch terakhir; resepnya dipilih dari run split (puncak epoch 13, epoch 14–15 sama 0,9778) |
+| **Strategi pelatihan** | Full fine-tuning (seluruh layer dilatih); AdamW lr 2e-5, weight decay 0,05, warmup 1 epoch + cosine decay, gradient clipping 1,0. Resep dipilih dari run split (puncak epoch 13, epoch 14–15 sama 0,9778); model Final/terpasang dilatih ulang dengan resep itu pada seluruh data (`--full-data`, 15 epoch, bobot = epoch terakhir). Skor lokal di tabel Hasil berasal dari run split karena model terpasang tidak punya data uji lokal |
 | **Augmentasi** | RandomResizedCrop(336, 0.60–1.00), horizontal flip, ColorJitter(0.3/0.3/0.3/0.05), RandomErasing p=0.25 + normalisasi CLIP (sama dengan evaluasi) |
 | **Penanganan kelas tidak seimbang** | Bobot kelas `N / (C × n_c)` pada CrossEntropyLoss, dihitung hanya dari data latih |
 | **Label noise** | Label smoothing 0,1 |
@@ -35,7 +35,7 @@ Kolom "lokal" = macro-F1 epoch terbaik pada split validasi lokal sendiri (413 ga
 | Putaran | Commit | Backbone | Macro-F1 lokal | Akurasi lokal | Macro-F1 asisten |
 |---|---|---|---|---|---|
 | Preview 1 (14 Okt) | [commit `submission/`](https://github.com/fajrifirdaus/DL-Studio-Proyek-2-Klasifikasi-Sampah/commits/main/submission/model.py) | EfficientNet V2-S | 0,9618 | 0,9661 | **0,9361** (akurasi 0,9379; peringkat 7 dari 10 yang dinilai; baseline 0,9159, juara 0,9590) |
-| Preview 2 (21 Okt) | [commit `submission/`](https://github.com/fajrifirdaus/DL-Studio-Proyek-2-Klasifikasi-Sampah/commits/main/submission/model.py) | EVA-02 Small @336, **dilatih 100% data** | tidak bisa diukur (my_val ikut dilatih); model split yang sama: 0,9781 | — | *(menunggu pengumuman)* |
+| Preview 2 (21 Okt) | [commit `submission/`](https://github.com/fajrifirdaus/DL-Studio-Proyek-2-Klasifikasi-Sampah/commits/main/submission/model.py) | EVA-02 Small @336 | 0,9781 | 0,9806 | *(menunggu pengumuman)* |
 | Final (25 Okt) | *(belum)* | — | — | — | — |
 
 **Skor lokal vs skor asisten (Preview 1).** Skor asisten 0,9361 berada 2,6 poin di bawah skor
@@ -72,8 +72,11 @@ Tiap run (berhasil maupun gagal) punya commit sendiri berisi pengaturan, perubah
 
 | Kandidat | Resolusi | lr / batch | Epoch terbaik | Macro-F1 | Akurasi | F1 kertas_kardus | Status |
 |---|---|---|---|---|---|---|---|
-| **EVA-02 Small** | **336** | 2e-5 / 8 | 13/15 | **0,9781** | **98,06%** | 0,953 | **dipasang** |
+| **EVA-02 Small** | **336** | 2e-5 / 8 | 13/15 | **0,9781** | **98,06%** | 0,953 | **dipilih** (arsitektur + resep) |
+| EVA-02 Small (seed latih 7) | 336 | 2e-5 / 8 | 5/10 | 0,9814 | 98,31% | 0,964 | puncak sesaat (ep4 0,9549 → ep5 0,9814 → ep6 0,9696); rata-rata ep ≥ 6 di bawah seed 42 |
+| CAFormer-S18 | 384 | 5e-5 / 8 | 7/12 | 0,9755 | 97,82% | 0,945 | tidak lebih baik |
 | ConvNeXt V2-Base | 224 | 5e-5 / 8 | 10/14 | 0,9739 | 97,58% | 0,953 | bobot 175 MB, tidak dipilih |
+| TinyViT-21M | 384 | 5e-5 / 8 | 8/13 | 0,9734 | 97,58% | 0,944 | tidak lebih baik |
 | ConvNeXt V2-Tiny | 384 | 5e-5 / 8 | 8/13 | 0,9725 | 97,58% | 0,943 | — |
 | Ensemble Tiny + V2-S | 384 | — | — | 0,9672 | 97,09% | 0,935 | gagal (< Tiny saja) |
 | DINOv2 ViT-S | 224 | 2e-5 / 16 | 14/15 | 0,9539 | 95,88% | 0,899 | gagal (< V2-S) |
@@ -123,11 +126,17 @@ python train.py --data "<...>/train" --arsitektur experiments/eva02_small_model.
                 --epochs 15 --lr 2e-5 --weight-decay 0.05 --warmup 1 --clip-grad 1.0 \
                 --start-epoch 6 --patience 5 --batch-size 8 --tag eva02_small_336_lr2e-5_seed42
 
-# Simpan bobot dalam fp16 (43,5 MB; prediksi identik), lalu uji dan promosikan hanya kalau menang
-python -c "import torch; t='runs/eva02_small_336_lr2e-5_seed42/eva02_small_336_lr2e-5_seed42'; s=torch.load(t+'.pth', weights_only=True); torch.save({k: v.half() if v.is_floating_point() else v for k, v in s.items()}, t+'_fp16.pth')"
-python experiments/promote.py --candidate runs/eva02_small_336_lr2e-5_seed42/eva02_small_336_lr2e-5_seed42_fp16.pth \
+# Latih ulang pada 100% data dengan resep yang sama (tanpa validasi; bobot = epoch ke-15).
+# Ini model yang terpasang di submission/.
+python train.py --data "<...>/train" --arsitektur experiments/eva02_small_model.py --full-data \
+                --epochs 15 --lr 2e-5 --weight-decay 0.05 --warmup 1 --clip-grad 1.0 \
+                --batch-size 8 --tag eva02_small_336_lr2e-5_full_seed42
+
+# Simpan bobot dalam fp16 (43,5 MB; prediksi identik dengan fp32), lalu uji dan promosikan
+python -c "import torch; t='runs/eva02_small_336_lr2e-5_full_seed42/eva02_small_336_lr2e-5_full_seed42'; s=torch.load(t+'.pth', weights_only=True); torch.save({k: v.half() if v.is_floating_point() else v for k, v in s.items()}, t+'_fp16.pth')"
+python experiments/promote.py --candidate runs/eva02_small_336_lr2e-5_full_seed42/eva02_small_336_lr2e-5_full_seed42_fp16.pth \
        --arsitektur experiments/eva02_small_model.py --dry-run
-python experiments/promote.py --candidate runs/eva02_small_336_lr2e-5_seed42/eva02_small_336_lr2e-5_seed42_fp16.pth \
+python experiments/promote.py --candidate runs/eva02_small_336_lr2e-5_full_seed42/eva02_small_336_lr2e-5_full_seed42_fp16.pth \
        --arsitektur experiments/eva02_small_model.py --yes
 
 # WAJIB: uji dengan skrip evaluasi resmi milik asisten
@@ -136,8 +145,8 @@ python evaluate.py --submission ./submission --data ./my_val
 
 Eksperimen pendukung (RPS): `--freeze-epochs 5` (linear probing → full fine-tuning),
 `--scratch` (tanpa bobot ImageNet), `--no-class-weight` (ablasi bobot kelas),
-`--kfolds 5 --fold 1..5` (lihat Catatan jujur 2). Putaran Final: `--full-data --epochs 18`
-melatih ulang di 100% data. Setiap run menulis `runs/<tag>/{config,history,metrics}.json`.
+`--kfolds 5 --fold 1..5` (lihat Catatan jujur 2). Putaran Final: `--full-data` (lihat di atas)
+melatih ulang di 100% data. Opsi lain: `--split-seed` (seed latih beda, `my_val` sama), `--train-frac` (kurva skor vs jumlah data), `--clip-grad`. Setiap run menulis `runs/<tag>/{config,history,metrics}.json`.
 
 ### Perubahan resolusi = perubahan `submission/model.py`
 
@@ -167,12 +176,15 @@ Melatih pada satu resolusi tetapi mengevaluasi pada resolusi lain menurunkan aku
 │   ├── convnextv2_tiny_model.py  # ConvNeXt V2-Tiny (384, timm)
 │   ├── convnextv2_base_model.py  # ConvNeXt V2-Base (224, timm)
 │   ├── dinov2_vits_model.py      # DINOv2 ViT-S/14 (224, timm)
+│   ├── caformer_s18_model.py     # CAFormer-S18 (384, timm)
+│   ├── tiny_vit_21m_model.py     # TinyViT-21M (384, timm)
+│   ├── buat_val_bersih.py        # my_val_bersih/: val tanpa gambar kembar data latih
 │   ├── ensemble_cnxv2t_v2s_model.py + buat_ensemble.py  # ensemble Tiny + V2-S
 │   ├── promote.py                # uji kandidat -> promosi ke submission/ kalau menang
 │   └── README.md
 ├── submission/
 │   ├── model.py                  # get_model() EVA-02 Small + get_transform() 336
-│   ├── model.pth                 # state_dict model terbaik, fp16 (43,5 MB)
+│   ├── model.pth                 # state_dict EVA-02 Small (dilatih 100% data), fp16 (43,5 MB)
 │   └── requirements.txt
 └── runs/<tag>/                   # bukti eksperimen: config, history, metrics (JSON)
 ```

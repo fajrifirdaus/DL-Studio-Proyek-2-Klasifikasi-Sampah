@@ -18,12 +18,23 @@ seleksi berdasarkan macro-F1. Batch otomatis: 32 untuk 224 px, 8 untuk 384 px.
 |---|---|---|---|---|---|---|
 | `resnet18_kf1_seed42` | ResNet-18 **scratch** (`--scratch`, K-fold 1) | 224 | — | — | — | ⚠️ tidak lengkap — tanpa `metrics.json`, tidak dipakai |
 | `resnet34_split_seed42` | ResNet-34 pretrained | 224 | 22/30 | 0,9408 | 94,19% | kalah |
-| `efficientnet_v2_s_split_seed42` | **EfficientNet V2-S pretrained** | **384** | 16/24 | **0,9618** | **96,61%** | ✅ **terpasang di `submission/`** |
+| `efficientnet_v2_s_split_seed42` | EfficientNet V2-S pretrained | 384 | 16/24 | 0,9618 | 96,61% | Preview 1 (skor asisten 0,9361) |
+| `eva02_small_336_lr2e-5_seed42` | **EVA-02 Small pretrained (timm)** | **336** | 13/15 | **0,9781** | **98,06%** | ✅ **arsitektur + resep terpasang** (bobot = latih ulang 100% data, `eva02_small_336_lr2e-5_full_seed42`) |
+| `eva02_small_336_lr2e-5_seed7` | EVA-02 Small, seed latih 7 | 336 | 5/10 | 0,9814 | 98,31% | puncak sesaat, tidak dipilih |
+| `caformer_s18_384_lr5e-5_seed42` | CAFormer-S18 | 384 | 7/12 | 0,9755 | 97,82% | tidak lebih baik |
+| `convnextv2_base_224_split_seed42` | ConvNeXt V2-Base | 224 | 10/14 | 0,9739 | 97,58% | bobot 175 MB, tidak dipilih |
+| `tiny_vit_21m_384_lr5e-5_seed42` | TinyViT-21M | 384 | 8/13 | 0,9734 | 97,58% | tidak lebih baik |
+| `convnextv2_tiny_384_split_seed42` | ConvNeXt V2-Tiny | 384 | 8/13 | 0,9725 | 97,58% | — |
+| `dinov2_vits_224_lr2e-5_seed42` | DINOv2 ViT-S | 224 | 14/15 | 0,9539 | 95,88% | gagal |
+| `ensemble_cnxv2t_v2s` | Ensemble Tiny + V2-S | 384 | — | 0,9672 | 97,09% | gagal (< Tiny saja) |
+| `eva02_small_336_frac{0.25,0.50,0.75}_seed42` | EVA-02 Small, 25/50/75% data latih | 336 | — | 0,9488 / 0,9716 / 0,9685 | 95,16 / 97,34 / 97,09% | kurva data vs skor |
 
-Promosi terakhir: 14 Okt 2026 16:18 → `submission/model.py` + `submission/model.pth` =
-EfficientNet V2-S. Arsip submission lama di `runs/_arsip/20261014-161751/`, riwayat di
-`runs/_arsip/riwayat.jsonl`. Setelah promosi, `evaluate.py` resmi diulang di root repo:
-**macro-F1 0,9618 · akurasi 0,9661 · 413 gambar · 6,9 detik** (batas aturan 15 menit).
+Promosi terakhir: 21 Okt 2026 17:59 → `submission/model.py` + `submission/model.pth` =
+EVA-02 Small @336, bobot dari run `eva02_small_336_lr2e-5_full_seed42` (seluruh data, 15 epoch,
+fp16 43,5 MB). Skor lokal di tabel memakai run split (`seed42`) dengan arsitektur dan resep yang
+sama, karena model terpasang ikut melatih `my_val`. Arsip submission lama di `runs/_arsip/`,
+riwayat di `runs/_arsip/riwayat.jsonl`. Uji `evaluate.py` resmi dari klon bersih:
+GPU 8,5 detik, CPU 37,0 detik untuk 413 gambar (batas aturan 15 menit).
 
 > **Catatan jujur:** 0,9408 dan 0,9618 adalah **epoch terbaik pada himpunan yang dipakai
 > memilih epoch**, jadi bias optimistis. Pada 328 gambar validasi yang benar-benar tidak
@@ -173,7 +184,9 @@ Ukuran di bawah adalah bobot ImageNet nyata (diukur dari server PyTorch); `model
 | resnet101 / vit_b_16 | 170–330 MB | **tidak** — perlu GitHub Release |
 | vgg16 | 528 MB | **tidak** — melanggar batas 500 MB aturan |
 
-> **Semua model di atas ada di `torchvision`** — syarat "tanpa timm" tetap terpenuhi.
+> **Semua model di tabel ini ada di `torchvision`.** Kandidat Preview 2 memakai `timm` (paket dasar
+> environment asisten, dicantumkan di `submission/requirements.txt`); `get_model()`-nya memakai
+> `pretrained=False`, jadi tidak mengunduh bobot saat evaluasi.
 
 ### Penting: resolusi setiap model BEDA
 
@@ -202,5 +215,5 @@ cara melatih**, bukan di arsitektur. Sisa pekerjaan yang paling menguntungkan:
 2. **Eksperimen pendukung RPS belum dijalankan** dengan `train.py` kelompok ini: `--freeze-epochs 5`
    (linear probing → full fine-tuning), `--scratch` (tanpa bobot ImageNet), `--no-class-weight`
    (ablasi bobot kelas). Belum ada angkanya, jadi jangan diklaim di README sampai diukur.
-3. **Putaran Final:** latih ulang di 100% data (`--full-data --epochs 18`) lalu promosikan ulang —
-   angka `runs/` sekarang masih dari 85% data.
+3. **Putaran Final:** model terpasang sudah dilatih ulang di 100% data (`--full-data`, 15 epoch);
+   angka `runs/*split*` tetap dari 85% data.
