@@ -547,6 +547,9 @@ def main() -> None:
     ap.add_argument("--kfolds", type=int, default=0, help="0 = split tunggal")
     ap.add_argument("--fold", type=int, default=1)
     ap.add_argument("--seed", type=int, default=42)
+    ap.add_argument("--split-seed", type=int, default=None,
+                    help="seed KHUSUS pembagian train/val (bawaan = --seed). Dipakai untuk "
+                         "mengulang latih dengan seed lain tetapi pada my_val yang SAMA")
     ap.add_argument("--patience", type=int, default=8)
     ap.add_argument("--start-epoch", type=int, default=10,
                     help="epoch minimum sebelum early stopping boleh aktif")
@@ -594,6 +597,8 @@ def main() -> None:
         print("       (tambahkan baris  BACKBONE = \"resnet34\"  di berkas itu kalau ingin disalin)")
         a.scratch = True
 
+    if a.split_seed is None:
+        a.split_seed = a.seed
     device = get_device()
     seed_everything(a.seed)
     workers = a.num_workers
@@ -643,7 +648,7 @@ def main() -> None:
         "weight_decay": a.weight_decay, "label_smoothing": a.label_smoothing,
         "clip_grad": a.clip_grad,
         "batch_size": a.batch_size, "val_frac": a.val_frac, "kfolds": a.kfolds,
-        "fold": a.fold, "seed": a.seed, "patience": a.patience,
+        "fold": a.fold, "seed": a.seed, "split_seed": a.split_seed, "patience": a.patience,
         "start_epoch": a.start_epoch, "min_delta": a.min_delta,
         "freeze_epochs": a.freeze_epochs, "scratch": a.scratch,
         "class_weight": a.class_weight, "limit": a.limit, "full_data": a.full_data,
@@ -657,13 +662,14 @@ def main() -> None:
         val_items = []
         print(f"\n[split] MODE FULL DATA: latih memakai SEMUA {len(train_items)} gambar")
     elif a.kfolds:
-        train_items, val_items = split_kfold(per_kelas, a.kfolds, a.fold, a.seed)
+        train_items, val_items = split_kfold(per_kelas, a.kfolds, a.fold, a.split_seed)
         print(f"\n[split] K-fold {a.kfolds}, fold {a.fold} (berstrata)")
     else:
-        train_items, val_items = split_single(per_kelas, a.val_frac, a.seed)
-        print(f"\n[split] split tunggal berstrata {a.val_frac:.0%} (seed {a.seed})")
+        train_items, val_items = split_single(per_kelas, a.val_frac, a.split_seed)
+        print(f"\n[split] split tunggal berstrata {a.val_frac:.0%} (seed split {a.split_seed}, "
+              f"seed latih {a.seed})")
         print(f"  pembagian dihitung ulang di sini (bukan dari berkas) - "
-              f"seed {a.seed} dipakai supaya hasilnya bisa diulang persis")
+              f"seed {a.split_seed} dipakai supaya hasilnya bisa diulang persis")
 
     print(f"  latih {len(train_items)} gambar | validasi {len(val_items)} gambar")
     if not a.full_data:
@@ -675,7 +681,7 @@ def main() -> None:
             print(f"  {nama:<16}{n_tr[i]:>8}{n_va[i]:>10}{porsi:>7.1f}%")
 
     if a.write_val and not a.full_data:
-        meta = {"seed": a.seed, "val_frac": (1.0 / a.kfolds if a.kfolds else a.val_frac),
+        meta = {"seed": a.split_seed, "val_frac": (1.0 / a.kfolds if a.kfolds else a.val_frac),
                 "kfolds": a.kfolds, "fold": a.fold if a.kfolds else 0,
                 "n_val": len(val_items), "limit": a.limit,
                 "files": sorted(Path(p).name for p, _ in val_items)}
