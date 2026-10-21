@@ -17,16 +17,16 @@ Repo: https://github.com/fajrifirdaus/DL-Studio-Proyek-2-Klasifikasi-Sampah
 
 | Butir | Isi |
 |---|---|
-| **Arsitektur / backbone** | **EfficientNet V2-S** pretrained ImageNet (`torchvision.efficientnet_v2_s`) |
-| **Strategi pelatihan** | Full fine-tuning (seluruh layer dilatih); AdamW, warmup linear + cosine decay, maksimal 30 epoch, early stopping, model terbaik dipilih berdasarkan **macro-F1 validasi** |
-| **Augmentasi** | RandomResizedCrop(384, 0.60–1.00), horizontal flip, ColorJitter(0.3/0.3/0.3/0.05), RandomErasing p=0.25 + normalisasi ImageNet |
+| **Arsitektur / backbone** | **EVA-02 Small @336** (`timm` `eva02_small_patch14_336`), pretrained MIM ImageNet-22k → fine-tune ImageNet-1k (`mim_in22k_ft_in1k`); sejak Preview 2. Preview 1: EfficientNet V2-S (torchvision) |
+| **Strategi pelatihan** | Full fine-tuning (seluruh layer dilatih); AdamW lr 2e-5, weight decay 0,05, warmup 1 epoch + cosine decay, gradient clipping 1,0, maksimal 15 epoch, early stopping, model terbaik dipilih berdasarkan **macro-F1 validasi** |
+| **Augmentasi** | RandomResizedCrop(336, 0.60–1.00), horizontal flip, ColorJitter(0.3/0.3/0.3/0.05), RandomErasing p=0.25 + normalisasi CLIP (sama dengan evaluasi) |
 | **Penanganan kelas tidak seimbang** | Bobot kelas `N / (C × n_c)` pada CrossEntropyLoss, dihitung hanya dari data latih |
 | **Label noise** | Label smoothing 0,1 |
 | **Data tambahan** | **Tidak ada** — hanya train set dari starter kit; dataset tidak diunggah ulang |
-| **Ukuran input & preprocessing** | `Resize(384)` → `CenterCrop(384)` → `ToTensor` → normalisasi ImageNet (`mean [0.485,0.456,0.406]`, `std [0.229,0.224,0.225]`, resolusi asli EfficientNet V2-S) |
-| **Paket** | `torch`, `torchvision`, `pillow`, `numpy` — **tanpa timm** |
-| **Ukuran `submission/model.pth`** | 81,7 MB (batas GitHub 100 MB; batas aturan 500 MB) |
-| **Waktu evaluasi** | 413 gambar = **6,9 detik** pada GPU lokal (setara ±12 detik untuk ±740 gambar) — jauh di bawah batas aturan 15 menit |
+| **Ukuran input & preprocessing** | `Resize(336, bicubic)` → `CenterCrop(336)` → `ToTensor` → normalisasi CLIP (`mean [0.4815,0.4578,0.4082]`, `std [0.2686,0.2613,0.2758]`, sesuai pretrain EVA-02) |
+| **Paket** | `torch`, `torchvision`, `timm>=0.9`, `pillow`, `numpy` (semua paket dasar environment asisten) |
+| **Ukuran `submission/model.pth`** | 43,5 MB — `state_dict` disimpan fp16 (prediksi identik dengan fp32: 0 dari 413 berbeda), dimuat ke model fp32 dengan `strict=True`; di bawah batas GitHub 100 MB, jadi tanpa Release/LFS |
+| **Waktu evaluasi** | 413 gambar = **8,5 detik** GPU / **36,4 detik CPU** lokal (setara ±65 detik CPU untuk ±740 gambar) — jauh di bawah batas aturan 15 menit |
 
 ## Hasil
 
@@ -35,7 +35,7 @@ Kolom "lokal" = macro-F1 epoch terbaik pada split validasi lokal sendiri (413 ga
 | Putaran | Commit | Backbone | Macro-F1 lokal | Akurasi lokal | Macro-F1 asisten |
 |---|---|---|---|---|---|
 | Preview 1 (14 Okt) | [commit `submission/`](https://github.com/fajrifirdaus/DL-Studio-Proyek-2-Klasifikasi-Sampah/commits/main/submission/model.py) | EfficientNet V2-S | 0,9618 | 0,9661 | *(menunggu pengumuman)* |
-| Preview 2 (21 Okt) | *(belum)* | — | — | — | — |
+| Preview 2 (21 Okt) | [commit `submission/`](https://github.com/fajrifirdaus/DL-Studio-Proyek-2-Klasifikasi-Sampah/commits/main/submission/model.py) | EVA-02 Small @336 | 0,9781 | 0,9806 | *(menunggu pengumuman)* |
 | Final (25 Okt) | *(belum)* | — | — | — | — |
 
 Tautan pada kolom **Commit** menunjuk riwayat commit `submission/model.py` — berisi hash commit
@@ -47,14 +47,34 @@ Sumber angka: `runs/<tag>/metrics.json` (berkas JSON-nya di-commit sebagai bukti
 
 ### Perbandingan backbone yang diuji
 
-Dua kandidat dilatih pada **split validasi yang sama** (413 gambar, seed 42, batch otomatis: 32 untuk 224 px, 8 untuk 384 px), seleksi berdasarkan macro-F1.
+Semua kandidat dilatih pada **split validasi yang sama** (413 gambar, seed 42), seleksi berdasarkan macro-F1.
+Tiap run (berhasil maupun gagal) punya commit sendiri berisi pengaturan, perubahan dan alasannya, serta hasil.
+
+**Preview 1**
 
 | Kandidat | Resolusi | Epoch terbaik | Macro-F1 | Akurasi | F1 kertas_kardus |
 |---|---|---|---|---|---|
 | ResNet-34 | 224 | 22/30 | 0,9408 | 94,19% | 0,925 |
 | **EfficientNet V2-S** | **384** | **16/24** | **0,9618** | **96,61%** | 0,925 |
 
-EfficientNet V2-S dipilih (+2,1 poin macro-F1) dan dipasang ke `submission/`.
+**Preview 2** (backbone `timm`; resep ViT/ConvNeXt: AdamW wd 0,05, warmup 1, clip-grad 1,0)
+
+| Kandidat | Resolusi | lr / batch | Epoch terbaik | Macro-F1 | Akurasi | F1 kertas_kardus | Status |
+|---|---|---|---|---|---|---|---|
+| **EVA-02 Small** | **336** | 2e-5 / 8 | 13/15 | **0,9781** | **98,06%** | 0,953 | **dipasang** |
+| ConvNeXt V2-Base | 224 | 5e-5 / 8 | 10/14 | 0,9739 | 97,58% | 0,953 | bobot 175 MB, tidak dipilih |
+| ConvNeXt V2-Tiny | 384 | 5e-5 / 8 | 8/13 | 0,9725 | 97,58% | 0,943 | — |
+| Ensemble Tiny + V2-S | 384 | — | — | 0,9672 | 97,09% | 0,935 | gagal (< Tiny saja) |
+| DINOv2 ViT-S | 224 | 2e-5 / 16 | 14/15 | 0,9539 | 95,88% | 0,899 | gagal (< V2-S) |
+| ConvNeXt V2-Tiny | 384 | 3e-4 / 8 | — | turun 0,94→0,87 | — | — | dihentikan (lr terlalu besar) |
+| ConvNeXt V2-Tiny | 384 | 1e-4 / 8 | — | runtuh 0,90→0,11 di ep 4 | — | — | dihentikan |
+
+EVA-02 Small dipasang ke `submission/` untuk Preview 2 (+1,6 poin macro-F1 atas V2-S). Uji
+McNemar: vs V2-S 9 vs 3 gambar (p = 0,146); vs ConvNeXt V2-Tiny 6 vs 4 (p = 0,75). Jadi
+keunggulannya **belum signifikan** secara statistik pada 413 gambar; EVA-02 dipilih karena skor
+tertinggi, paling ringan (21,7 jt parameter, bobot 43,5 MB), dan naik stabil tanpa runtuh.
+Pelajaran utama: cara/data pretrain (MIM, ImageNet-22k) lebih berpengaruh daripada ukuran model
+(ConvNeXt V2-Base 87,7 jt hanya +0,0014 atas Tiny 27,9 jt).
 
 > **Catatan jujur 1 — angka lokal overstate.** Kedua angka di atas adalah epoch terbaik **pada himpunan yang dipakai memilih epoch**, jadi bias optimistis. Pada uji terpisah yang bebas kontaminasi (328 gambar validasi yang tidak pernah dipakai seleksi), selisihnya +2,7 pp (96,04% vs 93,29%). Uji McNemar pada 413 gambar: 14 vs 4 gambar, p = 0,031 — beda nyata di split ini, tetapi masih di bawah ambang noise ±4,8 pp yang berlaku pada val sekecil ini. Karena itu angka di tabel ini **dilaporkan sebagai "epoch terbaik pada val lokal"**, bukan perkiraan skor validation set tersembunyi; pembanding yang sah adalah kolom asisten.
 > **Catatan jujur 2 — `--kfolds 5` tidak untuk skor.** Pada pipeline ini, run K-fold selalu memakai seluruh data di luar `my_val/` sebagai data latih, sehingga lipatan validasinya sebagian besar sudah pernah dilihat model (terukur 468 dari 553 gambar). K-fold di repo ini berguna untuk uji sensitivitas, **bukan** sebagai estimasi performa jujur. Estimasi jujur diperoleh dengan melatih ulang dari nol pada data latih lipatan itu.
@@ -87,17 +107,17 @@ pip install -r requirements.txt
 # Uji cepat (±1 menit) — pastikan skrip jalan sebelum latih penuh
 python train.py --data "<...>/Dataset Sampah Studio 2/train" --limit 300 --epochs 2
 
-# Latih kandidat (bobot otomatis ke runs/<tag>/<tag>.pth, submission/ tidak tersentuh)
-python train.py --data "<...>/train" --arsitektur experiments/resnet34_model.py \
-                --backbone resnet34 --tag coba_resnet34
-python train.py --data "<...>/train" --arsitektur experiments/efficientnet_v2s_model.py \
-                --backbone efficientnet_v2_s --batch-size 8 --tag coba_v2s
+# Latih model terpasang (EVA-02 Small @336); bobot ke runs/<tag>/<tag>.pth, submission/ tidak tersentuh
+python train.py --data "<...>/train" --arsitektur experiments/eva02_small_model.py \
+                --epochs 15 --lr 2e-5 --weight-decay 0.05 --warmup 1 --clip-grad 1.0 \
+                --start-epoch 6 --patience 5 --batch-size 8 --tag eva02_small_336_lr2e-5_seed42
 
-# Uji kandidat, lalu promosikan ke submission/ hanya kalau menang
-python experiments/promote.py --candidate runs/coba_v2s/coba_v2s.pth \
-       --arsitektur experiments/efficientnet_v2s_model.py --dry-run
-python experiments/promote.py --candidate runs/coba_v2s/coba_v2s.pth \
-       --arsitektur experiments/efficientnet_v2s_model.py --yes
+# Simpan bobot dalam fp16 (43,5 MB; prediksi identik), lalu uji dan promosikan hanya kalau menang
+python -c "import torch; t='runs/eva02_small_336_lr2e-5_seed42/eva02_small_336_lr2e-5_seed42'; s=torch.load(t+'.pth', weights_only=True); torch.save({k: v.half() if v.is_floating_point() else v for k, v in s.items()}, t+'_fp16.pth')"
+python experiments/promote.py --candidate runs/eva02_small_336_lr2e-5_seed42/eva02_small_336_lr2e-5_seed42_fp16.pth \
+       --arsitektur experiments/eva02_small_model.py --dry-run
+python experiments/promote.py --candidate runs/eva02_small_336_lr2e-5_seed42/eva02_small_336_lr2e-5_seed42_fp16.pth \
+       --arsitektur experiments/eva02_small_model.py --yes
 
 # WAJIB: uji dengan skrip evaluasi resmi milik asisten
 python evaluate.py --submission ./submission --data ./my_val
@@ -113,7 +133,8 @@ melatih ulang di 100% data. Setiap run menulis `runs/<tag>/{config,history,metri
 | Resolusi latih | `get_transform()` di `model.py` |
 |---|---|
 | 224 (ResNet, MobileNet, DenseNet, ConvNeXt) | `Resize(256)` + `CenterCrop(224)` |
-| **384 (dipakai sekarang, EfficientNet V2-S)** | `Resize(384)` + `CenterCrop(384)` |
+| 384 (EfficientNet V2-S Preview 1, ConvNeXt V2-Tiny) | `Resize(384)` + `CenterCrop(384)` |
+| **336 (dipakai sekarang, EVA-02 Small)** | `Resize(336, bicubic)` + `CenterCrop(336)` + normalisasi CLIP |
 
 Melatih pada satu resolusi tetapi mengevaluasi pada resolusi lain menurunkan akurasi
 **tanpa pesan error** — karena itu `model.py` dan `model.pth` wajib dari eksperimen yang sama.
@@ -130,12 +151,17 @@ Melatih pada satu resolusi tetapi mengevaluasi pada resolusi lain menurunkan aku
 ├── notebooks/train_colab.ipynb   # runner pelatihan di Colab
 ├── experiments/
 │   ├── resnet34_model.py         # kandidat ResNet-34 (224)
-│   ├── efficientnet_v2s_model.py # kandidat EfficientNet V2-S (384) -> TERPILIH
+│   ├── efficientnet_v2s_model.py # EfficientNet V2-S (384) - Preview 1
+│   ├── eva02_small_model.py      # EVA-02 Small (336, timm) -> TERPILIH Preview 2
+│   ├── convnextv2_tiny_model.py  # ConvNeXt V2-Tiny (384, timm)
+│   ├── convnextv2_base_model.py  # ConvNeXt V2-Base (224, timm)
+│   ├── dinov2_vits_model.py      # DINOv2 ViT-S/14 (224, timm)
+│   ├── ensemble_cnxv2t_v2s_model.py + buat_ensemble.py  # ensemble Tiny + V2-S
 │   ├── promote.py                # uji kandidat -> promosi ke submission/ kalau menang
 │   └── README.md
 ├── submission/
-│   ├── model.py                  # get_model() EfficientNet V2-S + get_transform() 384
-│   ├── model.pth                 # state_dict model terbaik (81,7 MB)
+│   ├── model.py                  # get_model() EVA-02 Small + get_transform() 336
+│   ├── model.pth                 # state_dict model terbaik, fp16 (43,5 MB)
 │   └── requirements.txt
 └── runs/<tag>/                   # bukti eksperimen: config, history, metrics (JSON)
 ```
@@ -158,9 +184,9 @@ bobot `*.pth` di `runs/` dan seluruh isi `runs/_arsip/<cap-waktu>/`.
 | **Total** | **2.753** | rata-rata tertimbang frekuensi 1,000 |
 
 Rasio kelas terbesar : terkecil = **1,84×**. `kertas_kardus` paling sedikit dan menjadi
-kelas dengan F1 terendah pada kedua kandidat (0,925; 6 dari 55 gambar validasi tertukar
-dengan gelas/saset) — perbaikan berikutnya paling menguntungkan dilakukan di sini, bukan
-dengan mengganti backbone lagi.
+kelas dengan F1 terendah pada **semua** kandidat (V2-S 0,925; EVA-02 0,953 — 4 dari 55 gambar
+validasi masih tertukar dengan gelas/saset/styrofoam). Perbaikan berikutnya paling menguntungkan
+dilakukan di sini.
 
 > **Catatan jumlah data.** Salinan lokal berisi **2.753** gambar, sedangkan halaman resmi
 > menyebut ±2.900. Penyebabnya sudah diperiksa lewat `train_sources.csv`: CSV memuat
@@ -201,10 +227,12 @@ yang mencadangkan versi lama, menyalin `model.py` + `model.pth` berpasangan, lal
 
 - **Urutan kelas wajib alfabetis** (sama dengan `ImageFolder` dan `evaluate.py`):
   `0 botol_plastik · 1 gelas_plastik · 2 kertas_kardus · 3 saset_kemasan · 4 styrofoam`
-- **`model.py` hanya membangun arsitektur**: `weights=None`, tanpa mengunduh bobot dan tanpa
-  memuat `model.pth` (yang memuat adalah `evaluate.py`).
-- **Batas teknis:** `model.pth` kelompok ini 81,7 MB (≤ 500 MB) dan evaluasi 413 gambar
-  selesai 6,9 detik (≤ 15 menit), jadi tidak perlu GitHub Release / Git LFS.
+- **`model.py` hanya membangun arsitektur**: `timm.create_model(..., pretrained=False)`
+  (padanan `weights=None` di torchvision), tanpa mengunduh bobot dan tanpa memuat `model.pth`
+  (yang memuat adalah `evaluate.py`). Diuji dengan jaringan diblokir: 0 percobaan koneksi.
+  Bobot ImageNet hanya diunduh saat **latih** lewat `muat_bobot_pretrained()` yang dipanggil `train.py`.
+- **Batas teknis:** `model.pth` kelompok ini 43,5 MB (≤ 500 MB) dan evaluasi 413 gambar
+  selesai 36,4 detik di CPU (≤ 15 menit), jadi tidak perlu GitHub Release / Git LFS.
 - **Kompatibilitas `strict=True`:** `model.pth` dihasilkan oleh `get_model()` dari `model.py`
   yang sama, jadi seluruh nama kunci `state_dict` cocok.
 

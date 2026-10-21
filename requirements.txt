@@ -1,12 +1,15 @@
 # Dependensi untuk melatih dan menguji model (jalankan dari root repo).
 #
-# Model (EfficientNet V2-S) diambil dari torchvision, jadi tidak ada paket
-# tambahan di luar paket dasar yang sudah disiapkan asisten.
+# Model terpasang (EVA-02 Small) dan kandidat ConvNeXt V2 / DINOv2 memakai timm;
+# EfficientNet V2-S dan ResNet memakai torchvision. Semuanya paket dasar yang
+# sudah disiapkan asisten. timm juga mengunduh bobot pretrained saat LATIH
+# (lewat huggingface_hub, ikut terpasang bersama timm).
 
 numpy>=1.24
 pillow
 torch>=2.0
 torchvision>=0.15
+timm>=0.9
 
 # matplotlib hanya dipakai notebooks/train_colab.ipynb untuk menggambar kurva
 # pelatihan dan confusion matrix. train.py dan evaluate.py TIDAK memakainya,
@@ -16,9 +19,8 @@ matplotlib
 # ============================================================
 # CATATAN
 # ============================================================
-# - Versi minimum torch/torchvision ditulis karena submission/model.py memakai
-#   efficientnet_v2_s dan transforms.Resize(..., antialias=True) yang butuh
-#   torchvision >= 0.13.
+# - Versi minimum: torchvision >= 0.15 (InterpolationMode/antialias aman),
+#   timm >= 0.9 (arsitektur eva02_* dan convnextv2_* tersedia).
 # - Baris komentar SELALU di awal baris, jangan di ujung baris paket.
 #   Komentar di ujung baris ikut terbaca sebagai nama paket dan bisa
 #   membuat pemasangan gagal.
