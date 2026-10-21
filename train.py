@@ -550,6 +550,9 @@ def main() -> None:
     ap.add_argument("--split-seed", type=int, default=None,
                     help="seed KHUSUS pembagian train/val (bawaan = --seed). Dipakai untuk "
                          "mengulang latih dengan seed lain tetapi pada my_val yang SAMA")
+    ap.add_argument("--train-frac", type=float, default=1.0,
+                    help="pakai hanya sebagian data LATIH (berstrata per kelas); my_val tidak berubah. "
+                         "Untuk menguji apakah menambah data membantu (kurva data vs skor)")
     ap.add_argument("--patience", type=int, default=8)
     ap.add_argument("--start-epoch", type=int, default=10,
                     help="epoch minimum sebelum early stopping boleh aktif")
@@ -652,6 +655,7 @@ def main() -> None:
         "start_epoch": a.start_epoch, "min_delta": a.min_delta,
         "freeze_epochs": a.freeze_epochs, "scratch": a.scratch,
         "class_weight": a.class_weight, "limit": a.limit, "full_data": a.full_data,
+        "train_frac": a.train_frac,
         "data": str(a.data), "out": str(out_path), "tag": tag,
     }, indent=2, default=str))
 
@@ -670,6 +674,19 @@ def main() -> None:
               f"seed latih {a.seed})")
         print(f"  pembagian dihitung ulang di sini (bukan dari berkas) - "
               f"seed {a.split_seed} dipakai supaya hasilnya bisa diulang persis")
+
+    if a.train_frac < 1.0:
+        if a.full_data:
+            raise SystemExit("[GAGAL] --train-frac tidak boleh dipakai bersama --full-data")
+        rng = random.Random(a.seed)
+        sisa = []
+        for k in range(NUM_CLASSES):
+            milik = [it for it in train_items if it[1] == k]
+            rng.shuffle(milik)
+            sisa += milik[:max(1, round(len(milik) * a.train_frac))]
+        print(f"  [train-frac] data latih dikurangi {len(train_items)} -> {len(sisa)} "
+              f"({a.train_frac:.0%}, berstrata, seed {a.seed}); validasi tidak berubah")
+        train_items = sisa
 
     print(f"  latih {len(train_items)} gambar | validasi {len(val_items)} gambar")
     if not a.full_data:
