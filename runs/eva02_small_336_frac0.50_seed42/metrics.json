@@ -1,0 +1,58 @@
+{
+  "backbone": "eva02_small",
+  "pretrained": true,
+  "arsitektur": "experiments/eva02_small_model.py",
+  "epochs_dijalankan": 15,
+  "tag": "eva02_small_336_frac0.50_seed42",
+  "salin_bobot": {
+    "disalin": 162,
+    "dilewati": 2
+  },
+  "best_epoch": 10,
+  "val_macro_f1": 0.9715548957477897,
+  "val_acc": 0.9733656174334141,
+  "per_class_f1": {
+    "botol_plastik": 0.9743589743589743,
+    "gelas_plastik": 0.9548387096774195,
+    "kertas_kardus": 0.9629629629629629,
+    "saset_kemasan": 0.9803921568627452,
+    "styrofoam": 0.9852216748768472
+  },
+  "confusion_matrix": [
+    [
+      76,
+      1,
+      0,
+      1,
+      0
+    ],
+    [
+      2,
+      74,
+      1,
+      0,
+      1
+    ],
+    [
+      0,
+      0,
+      52,
+      2,
+      1
+    ],
+    [
+      0,
+      1,
+      0,
+      100,
+      0
+    ],
+    [
+      0,
+      1,
+      0,
+      0,
+      100
+    ]
+  ]
+}
