@@ -34,6 +34,7 @@ train/
 val/
 my_train/
 my_val/
+my_val_bersih/
 *.jpg
 *.jpeg
 *.png
