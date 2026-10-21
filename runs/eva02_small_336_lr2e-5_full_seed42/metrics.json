@@ -1,0 +1,12 @@
+{
+  "backbone": "eva02_small",
+  "pretrained": true,
+  "arsitektur": "experiments/eva02_small_model.py",
+  "epochs_dijalankan": 15,
+  "tag": "eva02_small_336_lr2e-5_full_seed42",
+  "salin_bobot": {
+    "disalin": 162,
+    "dilewati": 2
+  },
+  "full_data": true
+}
