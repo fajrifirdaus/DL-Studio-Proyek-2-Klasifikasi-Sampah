@@ -35,7 +35,7 @@ Kolom "lokal" = macro-F1 epoch terbaik pada split validasi lokal sendiri (413 ga
 | Putaran | Commit | Backbone | Macro-F1 lokal | Akurasi lokal | Macro-F1 asisten |
 |---|---|---|---|---|---|
 | Preview 1 (14 Okt) | [commit `submission/`](https://github.com/fajrifirdaus/DL-Studio-Proyek-2-Klasifikasi-Sampah/commits/main/submission/model.py) | EfficientNet V2-S | 0,9618 | 0,9661 | **0,9361** (akurasi 0,9379; peringkat 7 dari 10 yang dinilai; baseline 0,9159, juara 0,9590) |
-| Preview 2 (21 Okt) | [commit `submission/`](https://github.com/fajrifirdaus/DL-Studio-Proyek-2-Klasifikasi-Sampah/commits/main/submission/model.py) | EVA-02 Small @336 | 0,9781 | 0,9806 | *(menunggu pengumuman)* |
+| Preview 2 (21 Okt) | [commit `submission/`](https://github.com/fajrifirdaus/DL-Studio-Proyek-2-Klasifikasi-Sampah/commits/main/submission/model.py) | EVA-02 Small @336 | 0,9781 | 0,9806 | **0,9615** (Peringkat 5 dari 18 yang dinilai; baseline 0,9159, juara 0,9748 ) |
 | Final (25 Okt) | *(belum)* | — | — | — | — |
 
 **Skor lokal vs skor asisten (Preview 1).** Skor asisten 0,9361 berada 2,6 poin di bawah skor
